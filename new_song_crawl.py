@@ -60,8 +60,6 @@ def get_pop():
     soup = BeautifulSoup(html, 'html.parser')
     title_soup = soup.select("div > div.chart-list-item__title > span")
     artist_soup = soup.select("div > div.chart-list-item__artist")
-    print(len([(title.text.strip()) for title in title_soup]))
-    print(len([(artist.text.strip()) for artist in artist_soup]))
 
     billboard200 = [title.text.strip() + " - " + artist.text.strip() for title, artist in zip(title_soup, artist_soup)]
     billboard200.insert(0, soup.select('div.chart-number-one__title')[0].text.strip() + ' - ' + soup.select('div.chart-number-one__artist')[0].text.strip())
@@ -76,7 +74,6 @@ def get_pop():
             before = []
 
         new_songs = [i for i in billboard200 if i not in before]
-        print(new_songs)
         with open(latest_path, 'w') as f:
             before.extend(new_songs)
             data['kpop'] = before
@@ -99,8 +96,8 @@ def get_pop():
 
 if __name__=='__main__':
     for i in range(1):
-        # print(i)
-        # get_kpop()
+        print(i)
+        get_kpop()
         get_pop()
 
 
