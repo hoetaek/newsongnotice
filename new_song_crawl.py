@@ -76,7 +76,7 @@ def get_pop():
         new_songs = [i for i in billboard200 if i not in before]
         with open(latest_path, 'w') as f:
             before.extend(new_songs)
-            data['kpop'] = before
+            data['pop'] = before
             json.dump(data, f)
         if new_songs:
             conn = sqlite3.connect('user_info.db')
@@ -92,7 +92,7 @@ def get_pop():
         #     json.dump(data, f)
     else:
         with open(latest_path, 'w') as f:
-            json.dump({'kpop': []}, f)
+            json.dump({'pop': []}, f)
 
 if __name__=='__main__':
     for i in range(1):
