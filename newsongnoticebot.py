@@ -1,7 +1,7 @@
 from telegram import Bot
 from telegram.ext import Updater, CommandHandler
 import sqlite3
-from make_db import insert_user_kpop
+from make_db import insert_user_kpop, insert_user_pop
 
 token = '751248768:AAEJB5JcAh52nWfrSyKTEISGX8_teJIxNFw'
 bot = Bot(token=token)
@@ -11,6 +11,7 @@ def start(bot, update):
     conn = sqlite3.connect('user_info.db')
     c = conn.cursor()
     insert_user_kpop(c, chat_id)
+    insert_user_pop(c, chat_id)
     update.message.reply_text(
         '안녕하세요.\n'
         '새로운 노래 알림봇을 추가해주셔서 감사합니다.\n'
@@ -28,6 +29,7 @@ def stop(bot, update):
     if user:
         user_id = user[0]
         c.execute("DELETE FROM users_kpop WHERE user_id = {}".format(user_id))
+        c.execute("DELETE FROM users_pop WHERE user_id = {}".format(user_id))
     conn.commit()
     c.close()
     conn.close()
