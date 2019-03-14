@@ -11,7 +11,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 token = '751248768:AAEJB5JcAh52nWfrSyKTEISGX8_teJIxNFw'
 bot = Bot(token=token)
 
-def get_kpop():
+def get_kpop_100():
     headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36',}
     latest_path = os.path.join(BASE_DIR, 'latest.json')
     kpop_chart_100 = []
@@ -53,7 +53,7 @@ def get_kpop():
         with open(latest_path, 'w') as f:
             json.dump({'kpop': []}, f)
 
-def get_pop():
+def get_pop_200():
     latest_path = os.path.join(BASE_DIR, 'latest.json')
     response = requests.get("https://www.billboard.com/charts/hot-100")
     html = response.text
@@ -97,11 +97,12 @@ def get_pop():
 if __name__=='__main__':
     for i in range(1):
         print(i)
-        get_kpop()
-        get_pop()
+        get_kpop_100()
+        get_pop_200()
 
 
-    schedule.every(3).minutes.do(get_kpop)
+    schedule.every(3).minutes.do(get_kpop_100)
+    schedule.every(3).minutes.do(get_pop_200)
 
     while True:
         schedule.run_pending()
