@@ -43,10 +43,12 @@ def get_kpop_100():
                       " users.id = users_charts.user_id AND chart = '{}'".format("melon"))
             user_list = [user[0] for user in c.fetchall()]
             for chat_id in user_list:
-                bot.sendMessage(chat_id=chat_id,  # 580916113
-                                text='\n'.join(['{}. {}'
-                                                '\n유튜브 링크 : {}'.format(i, song, get_youtube_url(song)) for i, song in enumerate(new_songs, start=1)])
-                                )
+                for song in new_songs:
+                    bot.sendMessage(chat_id=chat_id,  # 580916113
+                                    text= "멜론 차트에 새로운 곡이 올라왔습니다\n" +
+                                          song[1] + ' - ' + song[0] + '\n' +
+                                          get_youtube_url(song[1] + ' - ' + song[0]) +
+                                          "\n알림을 그만 받고 싶다면 [/stop]을 터치해주세요.")
             c.close()
             conn.close()
         # for test
@@ -89,9 +91,13 @@ def get_pop_200():
             " users.id = users_charts.user_id AND chart = '{}'".format("billboard"))
             user_list = [user[0] for user in c.fetchall()]
             for chat_id in user_list:
-                bot.sendMessage(chat_id=chat_id,  # 580916113
-                                text='\n'.join(['{}. {}'
-                                                '\n유튜브 링크 : {}'.format(i, song, get_youtube_url(song)) for i, song in enumerate(new_songs, start=1)]))
+                for song in new_songs:
+                    bot.sendMessage(chat_id= chat_id, #"580916113",
+                                    text= "빌보드 차트에 새로운 곡이 올라왔습니다\n" +
+                                          song + '\n' +
+                                          get_youtube_url(song) +
+                                          "\n알림을 그만 받고 싶다면 [/stop]을 터치해주세요.")
+
             c.close()
             conn.close()
         # for test
@@ -228,8 +234,9 @@ if __name__=='__main__':
     Chrome = SongDownloadLink()
     Chrome.crawl_kpop_song_list()
     Chrome.crawl_pop_song_list()
-    get_kpop_100()
-    get_pop_200()
+    for i in range(10):
+        get_kpop_100()
+        get_pop_200()
     schedule.every(3).minutes.do(get_kpop_100)
     schedule.every(3).minutes.do(get_pop_200)
     schedule.every(30).minutes.do(Chrome.crawl_kpop_song_list)
