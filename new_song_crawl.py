@@ -116,7 +116,7 @@ class SongDownloadLink():
         options.add_argument("disable-gpu")
         return webdriver.Chrome('chromedriver', chrome_options=options)
 
-    def crawl_kpop_song_list(self, page_num = 1):
+    def crawl_kpop_song_list(self, page_num = 6):
         print("page num : ", page_num)
         url = "https://lover.ne.kr:124/bbs/zboard.php?id=sitelink1&page={}&select_arrange=headnum&desc=asc&category=1" \
               "&sn=off&ss=on&sc=on&keyword=&sn1=&divpage=1".format(page_num)
@@ -145,10 +145,10 @@ class SongDownloadLink():
         for i in new_song_info[:]:
             if self.get_download_link(i) == 'remove':
                 new_song_info.remove(i)
-        if new_song_info and page_num < 5:
+        if new_song_info and page_num < 25:
             self.crawl_kpop_song_list(page_num=page_num+1)
 
-    def crawl_pop_song_list(self, page_num = 1):
+    def crawl_pop_song_list(self, page_num = 6):
         print("page num : ", page_num)
         url = "https://lover.ne.kr:124/bbs/zboard.php?category=4&id=sitelink1&page={}&page_num=24&sn=off&ss=on&sc=on" \
               "&keyword=&select_arrange=headnum&desc=asc".format(page_num)
@@ -173,7 +173,7 @@ class SongDownloadLink():
         conn.close()
         for i in new_song_info:
             self.get_download_link(i)
-        if new_song_info and page_num < 5:
+        if new_song_info and page_num < 25:
             self.crawl_pop_song_list(page_num=page_num + 1)
 
     def get_download_link(self, song_info):
