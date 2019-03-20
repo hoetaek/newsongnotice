@@ -117,7 +117,7 @@ class SongDownloadLink():
         return webdriver.Chrome('chromedriver', chrome_options=options)
 
     def crawl_kpop_song_list(self, page_num = 1):
-        print("page num : ", page_num)
+        print("kpop page num : ", page_num)
         url = "https://lover.ne.kr:124/bbs/zboard.php?id=sitelink1&page={}&select_arrange=headnum&desc=asc&category=1" \
               "&sn=off&ss=on&sc=on&keyword=&sn1=&divpage=1".format(page_num)
         type = 'kpop'
@@ -149,7 +149,7 @@ class SongDownloadLink():
             self.crawl_kpop_song_list(page_num=page_num+1)
 
     def crawl_pop_song_list(self, page_num = 1):
-        print("page num : ", page_num)
+        print("pop page num : ", page_num)
         url = "https://lover.ne.kr:124/bbs/zboard.php?category=4&id=sitelink1&page={}&page_num=24&sn=off&ss=on&sc=on" \
               "&keyword=&select_arrange=headnum&desc=asc".format(page_num)
         type = 'pop'
