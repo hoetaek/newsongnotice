@@ -172,7 +172,6 @@ class SongDownloadLink():
 
     def get_download_link(self, song_info):
         type, song = song_info[0], song_info[1]
-        print(song[0], song[1])
         song_name = song[0]
         song_artist = song[1]
         link = song[2]
