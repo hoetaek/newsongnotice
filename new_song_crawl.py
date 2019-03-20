@@ -195,7 +195,7 @@ class SongDownloadLink():
         except KeyError:
             driver.quit()
             return 'remove'
-        url = "https://lover.ne.kr:124" + iframe_link[2:].replace('/link', '').rstrip()
+        url = "https://lover.ne.kr:124" + iframe_link[2:].replace('/link', '').strip()
         driver.get(url)
         html_source = driver.page_source
         driver.quit()

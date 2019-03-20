@@ -5,7 +5,7 @@ import sqlite3
 from make_db import insert_user, is_user, get_song_list, get_artist_list
 from new_song_crawl import get_youtube_url
 import string
-import os
+import os, re
 
 def build_menu(buttons, n_cols, header_buttons=None, footer_buttons=None):
     menu = [buttons[i:i + n_cols] for i in range(0, len(buttons), n_cols)]
@@ -102,23 +102,47 @@ def new_download(bot, update):
         '신청 목록에서 제외하고 싶은 가수가 있다면 [/exclude_artist]를 터치해주세요.\n'
     )
 
-
 def include_kpop_artist(bot, update):
-    chat_id = str(update.message['chat']['id'])
+    conn = sqlite3.connect('user_info.db')
+    c = conn.cursor()
+    c.execute("SELECT artist FROM kpop_artist")
+    chosung_list = sorted(
+        list(set([get_chosung(artist[0][0]) if is_hangul(artist[0][0]) else artist[0][0].upper() if artist[0][0].isalpha() else artist[0][0] for artist in c.fetchall()])))
+    print(chosung_list)
+    hangul_show_list = [InlineKeyboardButton(han, callback_data="han, "+han) for han in chosung_list]
+    menu = build_menu(hangul_show_list, 3)
+    hangul_show_markup = InlineKeyboardMarkup(menu)
+    update.message.reply_text("알림 받고 싶은 가수의 시작 초성 또는 알파벳을 선택해주세요.", reply_markup=hangul_show_markup)
+
+def kpop_artist_callback(bot, update):
+    data = update.callback_query.data.split(', ')
+    han = data[1]
+    chat_id = str(update.callback_query.message.chat_id)
     f = NamedTemporaryFile(mode='w+', encoding='utf-8', delete=False, dir='.')
-    rel_f_name = os.path.relpath(f.name)
+    select_f_name = os.path.relpath(f.name)
     f.close()
+
     conn = sqlite3.connect('user_info.db')
     c = conn.cursor()
     user_artist = get_artist_list(c, 'kpop', chat_id)
+    print(user_artist)
     c.execute("SELECT artist FROM kpop_artist")
-    artist_option = sorted([artist[0] for artist in c.fetchall() if artist[0] not in user_artist])
-    artist_show_list = [InlineKeyboardButton(artist, callback_data='kp' + artist + ", " + rel_f_name) for artist in artist_option]\
-                       + [InlineKeyboardButton('알림 취소', callback_data='kp' + '알림 취소' + ", " + rel_f_name)]
+    artist_option = sorted(
+        [artist[0] for artist in c.fetchall() if artist[0] not in user_artist and startswith(han, artist[0])])
+    print(artist_option)
+    artist_show_list = [InlineKeyboardButton(artist, callback_data="kp" + artist + ", " + select_f_name + ', ' + han)
+                        for artist in
+                        artist_option] + [InlineKeyboardButton('알림 취소',
+                                                               callback_data="kp" + "알림 취소" + ", " + select_f_name + ', ' + han)]
     menu = build_menu(artist_show_list, 3)
     artist_show_markup = InlineKeyboardMarkup(menu)
     c.close()
     conn.close()
+
+    bot.edit_message_text(text="알림 받고 싶은 가수를 선택해주세요.",
+                          chat_id=update.callback_query.message.chat_id,
+                          message_id=update.callback_query.message.message_id,
+                          reply_markup=artist_show_markup)
 
     update.message.reply_text("알림 받고 싶은 가수를 선택해주세요.", reply_markup=artist_show_markup)
 
@@ -188,7 +212,11 @@ def include_kpop_callback(bot, update):
         insert_user(c, conn, 'kpop', chat_id, artists)
 
 def include_pop_artist(bot, update):
-    alphabet_show_list = [InlineKeyboardButton(alph, callback_data="alph, "+alph) for alph in string.ascii_uppercase]
+    conn = sqlite3.connect('user_info.db')
+    c = conn.cursor()
+    c.execute("SELECT artist FROM pop_artist")
+    alphabet_list = sorted(list(set([artist[0][0].upper() if artist[0][0].isalpha() else artist[0][0] for artist in c.fetchall()])))
+    alphabet_show_list = [InlineKeyboardButton(alph, callback_data="alph, "+alph) for alph in alphabet_list]
     menu = build_menu(alphabet_show_list, 3)
     alphabet_show_markup = InlineKeyboardMarkup(menu)
     update.message.reply_text("알림 받고 싶은 가수의 시작 알파벳을 선택해주세요.", reply_markup=alphabet_show_markup)
@@ -207,7 +235,7 @@ def pop_artist_callback(bot, update):
     c = conn.cursor()
     user_artist = get_artist_list(c, 'pop', chat_id)
     c.execute("SELECT artist FROM pop_artist")
-    artist_option = sorted([artist[0] for artist in c.fetchall() if artist[0] not in user_artist and artist[0].startswith(alph)])
+    artist_option = sorted([artist[0] for artist in c.fetchall() if artist[0] not in user_artist and startswith(alph, artist[0])])
 
     artist_show_list = [InlineKeyboardButton(artist, callback_data="pop" + artist + ", " + select_f_name + ', ' + alph) for artist in
                         artist_option] + [InlineKeyboardButton('알림 취소', callback_data="pop" + "알림 취소" + ", " + select_f_name + ', ' + alph)]
@@ -464,12 +492,21 @@ def get_chosung(word):
         cho = cc // (21 * 28)
         return chosung[cho]
 
+def is_hangul(word):
+    hangul_re = re.compile(r"[ㄱ - | 가-힣]")
+    return hangul_re.search(word) is not None
+
+def startswith(pattern, word):
+    if is_hangul(word):
+        word = get_chosung(word)
+    return re.match(pattern, word, re.I)
+
 chosung = ['ㄱ', 'ㄲ', 'ㄴ', 'ㄷ', 'ㄸ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅃ', 'ㅅ',
                'ㅆ', 'ㅇ', 'ㅈ', 'ㅉ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ']
 
 if __name__=='__main__':
     token = '751248768:AAEJB5JcAh52nWfrSyKTEISGX8_teJIxNFw'
-    # token = "790146878:AAFKnWCnBV9WMSMYPnfcRXukmftgDyV_BlY" #this is a test bot
+    token = "790146878:AAFKnWCnBV9WMSMYPnfcRXukmftgDyV_BlY" #this is a test bot
 
     bot = Bot(token=token)
 
@@ -488,10 +525,13 @@ if __name__=='__main__':
     updater.dispatcher.add_handler(CommandHandler('exclude_artist', exclude_artist))
     updater.dispatcher.add_handler(CallbackQueryHandler(include_kpop_callback,
                                                         pattern='^kp'))
+    updater.dispatcher.add_handler(CallbackQueryHandler(kpop_artist_callback,
+                                                        pattern='^han'))
     updater.dispatcher.add_handler(CallbackQueryHandler(include_pop_callback,
                                                         pattern='^pop'))
     updater.dispatcher.add_handler(CallbackQueryHandler(pop_artist_callback,
                                                         pattern='^alph'))
+
     updater.dispatcher.add_handler(CallbackQueryHandler(exclude_callback,
                                                         pattern='^ex'))
     updater.dispatcher.add_handler(CallbackQueryHandler(search_type_callback,
