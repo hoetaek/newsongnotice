@@ -108,7 +108,6 @@ def include_kpop_artist(bot, update):
     c.execute("SELECT artist FROM kpop_artist")
     chosung_list = sorted(
         list(set([get_chosung(artist[0][0]) if is_hangul(artist[0][0]) else artist[0][0].upper() if artist[0][0].isalpha() else artist[0][0] for artist in c.fetchall()])))
-    print(chosung_list)
     hangul_show_list = [InlineKeyboardButton(han, callback_data="han, "+han) for han in chosung_list]
     menu = build_menu(hangul_show_list, 3)
     hangul_show_markup = InlineKeyboardMarkup(menu)
@@ -125,15 +124,13 @@ def kpop_artist_callback(bot, update):
     conn = sqlite3.connect('user_info.db')
     c = conn.cursor()
     user_artist = get_artist_list(c, 'kpop', chat_id)
-    print(user_artist)
     c.execute("SELECT artist FROM kpop_artist")
     artist_option = sorted(
-        [artist[0] for artist in c.fetchall() if artist[0] not in user_artist and startswith(han, artist[0])])
-    print(artist_option)
+        [artist[0] for artist in c.fetchall() if artist[0] not in user_artist and startswith(han, artist[0][0])])
     artist_show_list = [InlineKeyboardButton(artist, callback_data="kp" + artist + ", " + select_f_name + ', ' + han)
                         for artist in
-                        artist_option] + [InlineKeyboardButton('알림 취소',
-                                                               callback_data="kp" + "알림 취소" + ", " + select_f_name + ', ' + han)]
+                        artist_option] + [InlineKeyboardButton('선택 종료',
+                                                               callback_data="kp" + "선택 종료" + ", " + select_f_name + ', ' + han)]
     menu = build_menu(artist_show_list, 3)
     artist_show_markup = InlineKeyboardMarkup(menu)
     c.close()
@@ -153,22 +150,24 @@ def include_kpop_callback(bot, update):
     data_selected = data[0]
     if data_selected.startswith('kp'):
         data_selected = data_selected[2:]
-    f_name = data[1]
+    select_f_name = data[1]
+    han = data[2]
     chat_id = str(update.callback_query.message.chat_id)
 
     c.execute("SELECT artist FROM kpop_artist")
-    artist_option = sorted([artist[0] for artist in c.fetchall()])
+    artist_option = sorted([artist[0] for artist in c.fetchall() if startswith(han, artist[0][0])])
 
-    temp_file = open(f_name, mode='a+', encoding='utf-8')
+    temp_file = open(select_f_name, mode='a+', encoding='utf-8')
     temp_file.seek(0)
-    temp_data = temp_file.read()
+    selected_data = temp_file.read()
+
     user_artist = get_artist_list(c, 'kpop', chat_id)
     if user_artist:
         callback_data = ', '.join(user_artist) + ', '
     else:
         callback_data = ''
-    if temp_data:
-        callback_data = callback_data + temp_data + ', ' + data_selected
+    if selected_data:
+        callback_data = callback_data + selected_data + ', ' + data_selected
         temp_file.write(', ' + data_selected)
     else:
         callback_data = callback_data + data_selected
@@ -177,8 +176,8 @@ def include_kpop_callback(bot, update):
 
     if data_selected.split(", ")[-1] != "선택 종료" and data_selected.split(", ")[-1] != "알림 취소":
         option_artist_left = [i for i in artist_option if i not in callback_data.split(', ')]
-        show_list = [InlineKeyboardButton(artist, callback_data= "kp" + artist + ", " + f_name) for artist in option_artist_left]
-        menu = build_menu(show_list, 3) + [[InlineKeyboardButton("선택 종료", callback_data="kp" + "선택 종료" + ", " + f_name)]]
+        show_list = [InlineKeyboardButton(artist, callback_data= "kp" + artist + ", " + select_f_name + ', ' + han) for artist in option_artist_left]
+        menu = build_menu(show_list, 3) + [[InlineKeyboardButton("선택 종료", callback_data="kp" + "선택 종료" + ", " + select_f_name + ', ' + han)]]
         show_markup = InlineKeyboardMarkup(menu)
         bot.edit_message_text(text="{}가 선택되었습니다.\n추가 가수를 선택해 주세요.".format(callback_data),
                               chat_id=update.callback_query.message.chat_id,
@@ -194,7 +193,7 @@ def include_kpop_callback(bot, update):
         user_id = is_user(c, chat_id)
         if user_id:
             c.execute("DELETE FROM users_kpop_artist WHERE user_id = {}".format(user_id))
-        os.unlink(os.path.realpath(f_name))
+        os.unlink(os.path.realpath(select_f_name))
         conn.commit()
         c.close()
         conn.close()
@@ -207,7 +206,7 @@ def include_kpop_callback(bot, update):
                                      "다른 서비스를 다시 신청하고 싶으시면 [/help]를 터치해주세요.".format(callback_data),
                               chat_id = update.callback_query.message.chat_id,
                               message_id = update.callback_query.message.message_id)
-        os.unlink(os.path.realpath(f_name))
+        os.unlink(os.path.realpath(select_f_name))
         artists = callback_data.split(', ')
         insert_user(c, conn, 'kpop', chat_id, artists)
 
@@ -238,7 +237,7 @@ def pop_artist_callback(bot, update):
     artist_option = sorted([artist[0] for artist in c.fetchall() if artist[0] not in user_artist and startswith(alph, artist[0])])
 
     artist_show_list = [InlineKeyboardButton(artist, callback_data="pop" + artist + ", " + select_f_name + ', ' + alph) for artist in
-                        artist_option] + [InlineKeyboardButton('알림 취소', callback_data="pop" + "알림 취소" + ", " + select_f_name + ', ' + alph)]
+                        artist_option] + [InlineKeyboardButton('선택 종료', callback_data="pop" + "선택 종료" + ", " + select_f_name + ', ' + alph)]
     menu = build_menu(artist_show_list, 3)
     artist_show_markup = InlineKeyboardMarkup(menu)
     c.close()
@@ -261,7 +260,7 @@ def include_pop_callback(bot, update):
     chat_id = str(update.callback_query.message.chat_id)
 
     c.execute("SELECT artist FROM pop_artist")
-    artist_option = sorted([artist[0] for artist in c.fetchall() if artist[0].startswith(alph)])
+    artist_option = sorted([artist[0] for artist in c.fetchall() if startswith(alph, artist[0][0])])
 
     temp_file = open(select_f_name, mode='a+', encoding='utf-8')
     temp_file.seek(0)
@@ -495,8 +494,10 @@ def get_chosung(word):
 def is_hangul(word):
     hangul_re = re.compile(r"[ㄱ - | 가-힣]")
     return hangul_re.search(word) is not None
-
+from string import punctuation
 def startswith(pattern, word):
+    if pattern in punctuation:
+        pattern = "\\" + pattern
     if is_hangul(word):
         word = get_chosung(word)
     return re.match(pattern, word, re.I)
@@ -506,7 +507,7 @@ chosung = ['ㄱ', 'ㄲ', 'ㄴ', 'ㄷ', 'ㄸ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅃ', 'ㅅ',
 
 if __name__=='__main__':
     token = '751248768:AAEJB5JcAh52nWfrSyKTEISGX8_teJIxNFw'
-    token = "790146878:AAFKnWCnBV9WMSMYPnfcRXukmftgDyV_BlY" #this is a test bot
+    # token = "790146878:AAFKnWCnBV9WMSMYPnfcRXukmftgDyV_BlY" #this is a test bot
 
     bot = Bot(token=token)
 
