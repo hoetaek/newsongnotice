@@ -8,11 +8,7 @@ import json
 import os
 import urllib.parse
 from telegram import Bot
-from make_db import get_user_list, insert_song, is_song, make_db
-
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-token = '751248768:AAEJB5JcAh52nWfrSyKTEISGX8_teJIxNFw'
-bot = Bot(token=token)
+from make_db import get_user_list, insert_song, is_song
 
 def get_kpop_100():
     headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36',}
@@ -43,9 +39,14 @@ def get_kpop_100():
         if new_songs:
             conn = sqlite3.connect('user_info.db')
             c = conn.cursor()
-            for chat_id in get_user_list(c, "kpop", ''): #TODO artist):
+            c.execute("SELECT user FROM users, charts, users_charts WHERE charts.id = users_charts.charts_id AND"
+                      " users.id = users_charts.user_id AND chart = '{}'".format("melon"))
+            user_list = [user[0] for user in c.fetchall()]
+            for chat_id in user_list:
                 bot.sendMessage(chat_id=chat_id,  # 580916113
-                                text='\n'.join(['{}. {}'.format(i, song) for i, song in enumerate(new_songs, start=1)]))
+                                text='\n'.join(['{}. {}'
+                                                '\n유튜브 링크 : {}'.format(i, song, get_youtube_url(song)) for i, song in enumerate(new_songs, start=1)])
+                                )
             c.close()
             conn.close()
         # for test
@@ -84,9 +85,13 @@ def get_pop_200():
         if new_songs:
             conn = sqlite3.connect('user_info.db')
             c = conn.cursor()
-            for chat_id in get_user_list(c, "pop", ""):
+            c.execute("SELECT user FROM users, charts, users_charts WHERE charts.id = users_charts.charts_id AND"
+            " users.id = users_charts.user_id AND chart = '{}'".format("billboard"))
+            user_list = [user[0] for user in c.fetchall()]
+            for chat_id in user_list:
                 bot.sendMessage(chat_id=chat_id,  # 580916113
-                                text='\n'.join(['{}. {}'.format(i, song) for i, song in enumerate(new_songs, start=1)]))
+                                text='\n'.join(['{}. {}'
+                                                '\n유튜브 링크 : {}'.format(i, song, get_youtube_url(song)) for i, song in enumerate(new_songs, start=1)]))
             c.close()
             conn.close()
         # for test
@@ -105,7 +110,7 @@ class SongDownloadLink():
         options.add_argument("disable-gpu")
         return webdriver.Chrome('chromedriver', chrome_options=options)
 
-    def crawl_kpop_song_list(self, page_num = 4):
+    def crawl_kpop_song_list(self, page_num = 1):
         print("page num : ", page_num)
         url = "https://lover.ne.kr:124/bbs/zboard.php?id=sitelink1&page={}&select_arrange=headnum&desc=asc&category=1" \
               "&sn=off&ss=on&sc=on&keyword=&sn1=&divpage=1".format(page_num)
@@ -168,6 +173,8 @@ class SongDownloadLink():
     def get_download_link(self, song_info):
         type, song = song_info[0], song_info[1]
         print(song[0], song[1])
+        song_name = song[0]
+        song_artist = song[1]
         link = song[2]
         driver = self.start_driver()
         driver.get(link)
@@ -191,9 +198,16 @@ class SongDownloadLink():
         download_soup = soup.select("script[type='text/javascript']")[-1]
         download_link = re.findall('https://.*"', str(download_soup))[0][:-1]
         song[2] = download_link
+
         conn = sqlite3.connect('user_info.db')
         c = conn.cursor()
         insert_song(c, type, song)
+        for chat_id in get_user_list(c, type, song_artist):
+            bot.sendMessage(chat_id= chat_id, #"580916113",
+                            text= "곡: " + song_artist + " - " + song_name +
+                                  '\n유튜브 링크 : ' + get_youtube_url(song_artist + " - " + song_name) +
+                                  '\n다운로드 링크 : ' + download_link)
+
         conn.commit()
         c.close()
         conn.close()
@@ -207,10 +221,16 @@ def get_youtube_url(keyword):
     for link in soup.findAll('a', {'class': 'yt-uix-tile-link'}):
         return 'https://www.youtube.com' + link.get('href')
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+token = '751248768:AAEJB5JcAh52nWfrSyKTEISGX8_teJIxNFw'
+bot = Bot(token=token)
+
 if __name__=='__main__':
     Chrome = SongDownloadLink()
     Chrome.crawl_kpop_song_list()
     Chrome.crawl_pop_song_list()
+    get_kpop_100()
+    get_pop_200()
     schedule.every(3).minutes.do(get_kpop_100)
     schedule.every(3).minutes.do(get_pop_200)
     schedule.every(30).minutes.do(Chrome.crawl_kpop_song_list)

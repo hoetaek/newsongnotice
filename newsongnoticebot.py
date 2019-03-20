@@ -449,7 +449,7 @@ def search_callback(bot, update):
         song_artist = song_info[1]
         song_link = song_info[2]
         bot.sendMessage(chat_id=update.callback_query.message.chat_id,
-                        text="곡 : " + song_name + ' - ' + song_artist + \
+                        text="곡 : " + song_artist + ' - ' + song_name + \
                              '\n유튜브 링크 : ' + get_youtube_url(song_name + ' ' + song_artist) + \
                              '\n다운로드 링크 : ' + song_link + "\n\n")
     bot.sendMessage(chat_id=update.callback_query.message.chat_id,

@@ -153,14 +153,14 @@ def get_user_list(c, type, artist):
     user = []
     if type == 'kpop':
         c.execute(
-            "SELECT user FROM users, kpop_artist, users_kpop WHERE kpop_artist.id = users_kpop.kpop_artist_id AND"
-            " users.id = users_kpop.user_id AND artist = '{}'".format(artist)
+            "SELECT user FROM users, kpop_artist, users_kpop_artist WHERE kpop_artist.id = users_kpop_artist.kpop_artist_id AND"
+            " users.id = users_kpop_artist.user_id AND artist = '{}'".format(artist)
         )
         user = [row[0] for row in c.fetchall()]
     elif type == 'pop':
         c.execute(
-            "SELECT user FROM users, pop_artist, users_pop WHERE pop.id = users_pop.pop_artist_id AND"
-            " users.id = users_pop.user_id AND artist = '{}'".format(artist)
+            "SELECT user FROM users, pop_artist, users_pop_artist WHERE pop.id = users_pop_artist.pop_artist_id AND"
+            " users.id = users_pop_artist.user_id AND artist = '{}'".format(artist)
         )
         user = [row[0] for row in c.fetchall()]
     return user
