@@ -135,7 +135,7 @@ class SongDownloadLink():
             artist = info[0].strip()
             song = info[1].strip()
             link = "https://lover.ne.kr:124/bbs/" + i.select('a')[0]['href'].rstrip()
-            song_info.append((type,[song, artist, link]))
+            song_info.append((type,[song.replace("'", "''"), artist.replace("'", "''"), link]))
         driver.quit()
         conn = sqlite3.connect('user_info.db')
         c = conn.cursor()
@@ -164,7 +164,7 @@ class SongDownloadLink():
             artist = info[0].strip()
             song = info[1].strip()
             link = "https://lover.ne.kr:124/bbs/" + i.select('a')[0]['href'].rstrip()
-            song_info.append((type, [song, artist, link]))
+            song_info.append((type, [song.replace("'", "''"), artist.replace("'", "''"), link]))
         driver.quit()
         conn = sqlite3.connect('user_info.db')
         c = conn.cursor()
@@ -229,6 +229,7 @@ def get_youtube_url(keyword):
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 token = '751248768:AAEJB5JcAh52nWfrSyKTEISGX8_teJIxNFw'
 bot = Bot(token=token)
+
 
 if __name__=='__main__':
     Chrome = SongDownloadLink()

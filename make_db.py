@@ -59,29 +59,31 @@ def make_db():
 def insert_song(c, type, song_info):
     song = song_info[0]
     artist = song_info[1]
-    artistss = artist.split(', ')
+    artistss = artist.split(',')
     link = song_info[2]
 
-    if type == 'kpop':
+    if type == "kpop":
         c.execute("INSERT INTO kpop_song VALUES(NULL, ?, ?, ?)", (song, artist, link))
         song_id = c.lastrowid
         for artists in artistss:
+            artists = artists.strip()
             artist_id = is_artist(c, type, artists)
             if not artist_id:
                 artist_id = insert_artist(c, type, artists)
             c.execute("INSERT INTO kpop_song_artist VALUES(?, ?)", (song_id, artist_id))
 
-    elif type == 'pop':
+    elif type == "pop":
         c.execute("INSERT INTO pop_song VALUES(NULL, ?, ?, ?)", (song, artist, link))
         song_id = c.lastrowid
         for artists in artistss:
+            artists = artists.strip()
             artist_id = is_artist(c, type, artists)
             if not artist_id:
                 artist_id = insert_artist(c, type, artists)
             c.execute("INSERT INTO pop_song_artist VALUES(?, ?)", (song_id, artist_id))
 
 def insert_artist(c, type, artist):
-    if type == 'kpop':
+    if type == "kpop":
         if not is_artist(c, type, artist):
             c.execute("INSERT INTO kpop_artist VALUES(NULL, '{}')".format(artist))
             return c.lastrowid

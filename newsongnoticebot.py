@@ -458,7 +458,14 @@ def search_callback(bot, update):
     c.close()
     conn.close()
 
+def get_chosung(word):
+    for c in word:
+        cc = ord(c) - 44032
+        cho = cc // (21 * 28)
+        return chosung[cho]
 
+chosung = ['ㄱ', 'ㄲ', 'ㄴ', 'ㄷ', 'ㄸ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅃ', 'ㅅ',
+               'ㅆ', 'ㅇ', 'ㅈ', 'ㅉ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ']
 
 if __name__=='__main__':
     token = '751248768:AAEJB5JcAh52nWfrSyKTEISGX8_teJIxNFw'
