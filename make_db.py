@@ -29,7 +29,7 @@ def make_db():
         "CREATE TABLE IF NOT EXISTS pop_artist ( `id` INTEGER PRIMARY KEY AUTOINCREMENT, `artist` TEXT )"
     )
     c.execute(
-        "CREATE TABLE IF NOT EXISTS users_pop ( `user_id` INTEGER, `pop_artist_id` INTEGER, FOREIGN KEY(`user_id`)"
+        "CREATE TABLE IF NOT EXISTS users_pop_artist ( `user_id` INTEGER, `pop_artist_id` INTEGER, FOREIGN KEY(`user_id`)"
         " REFERENCES `users`(`id`), FOREIGN KEY(`pop_artist_id`) REFERENCES `pop_artist`(`id`) )"
     )
 
@@ -47,23 +47,26 @@ def make_db():
 def insert_song(c, type, song_info):
     song = song_info[0]
     artist = song_info[1]
+    artistss = artist.split(', ')
     link = song_info[2]
 
     if type == 'kpop':
-        artist_id = is_artist(c, type, artist)
-        if not artist_id:
-            artist_id = insert_artist(c, type, artist)
         c.execute("INSERT INTO kpop_song VALUES(NULL, ?, ?, ?)", (song, artist, link))
         song_id = c.lastrowid
-        c.execute("INSERT INTO kpop_song_artist VALUES(?, ?)", (song_id, artist_id))
+        for artists in artistss:
+            artist_id = is_artist(c, type, artists)
+            if not artist_id:
+                artist_id = insert_artist(c, type, artists)
+            c.execute("INSERT INTO kpop_song_artist VALUES(?, ?)", (song_id, artist_id))
 
     elif type == 'pop':
-        artist_id = is_artist(c, type, artist)
-        if not artist_id:
-            artist_id = insert_artist(c, type, artist)
         c.execute("INSERT INTO pop_song VALUES(NULL, ?, ?, ?)", (song, artist, link))
         song_id = c.lastrowid
-        c.execute("INSERT INTO pop_song_artist VALUES(?, ?)", (song_id, artist_id))
+        for artists in artistss:
+            artist_id = is_artist(c, type, artists)
+            if not artist_id:
+                artist_id = insert_artist(c, type, artists)
+            c.execute("INSERT INTO pop_song_artist VALUES(?, ?)", (song_id, artist_id))
 
 def insert_artist(c, type, artist):
     if type == 'kpop':
@@ -77,58 +80,62 @@ def insert_artist(c, type, artist):
             c.execute("INSERT INTO pop_artist VALUES(NULL, '{}')".format(artist))
             return c.lastrowid
 
-def insert_user(c, type, user, artists):
-    user_entry = is_user(c, user)
-    if user_entry:
-        user_id = user_entry[0]
-    else:
+def insert_user(c, conn, type, user, artists):
+    user_id = is_user(c, user)
+    if not user_id:
         c.execute("INSERT INTO users VALUES(NULL, '{}')".format(user))
         user_id = c.lastrowid
-
     if type == 'kpop':
-        c.execute("DELETE FROM users_kpop WHERE user_id = '{}'".format(user_id))
+        c.execute("DELETE FROM users_kpop_artist WHERE user_id = '{}'".format(user_id))
         for artist in artists:
             c.execute("SELECT id FROM kpop_artist WHERE artist = '{}'".format(artist))
-            artist_id = c.fetchone()[0]
-            c.execute("INSERT INTO users_kpop VALUES(?, ?)", (user_id, artist_id))
+            artist_id = c.fetchone()
+            if artist_id:
+                artist_id = artist_id[0]
+                c.execute("INSERT INTO users_kpop_artist VALUES(?, ?)", (user_id, artist_id))
     elif type == 'pop':
-        c.execute("DELETE FROM users_pop WHERE user_id = '{}'".format(user_id))
+        c.execute("DELETE FROM users_pop_artist WHERE user_id = '{}'".format(user_id))
         for artist in artists:
-            c.execute("SELECT id FROM kpop_artist WHERE artist = '{}'".format(artist))
-            artist_id = c.fetchone()[0]
-            c.execute("INSERT INTO users_pop VALUES(?, ?)", (user_id, artist_id))
+            c.execute("SELECT id FROM pop_artist WHERE artist = '{}'".format(artist))
+            artist_id = c.fetchone()
+            if artist_id:
+                artist_id = artist_id[0]
+                c.execute("INSERT INTO users_pop_artist VALUES(?, ?)", (user_id, artist_id))
+    conn.commit()
+    c.close()
+    conn.close()
 
 def get_song_list(c, type, artist):
     song = []
     if type == 'kpop':
         c.execute(
-            "SELECT song.format(artist), link FROM users, kpop_artist, users_kpop WHERE kpop_artist.id = users_kpop.kpop_artist_id AND"
-            " users.id = users_kpop.user_id AND user = '{}'".format(artist)
+            "SELECT song, kpop_song.artist, link FROM kpop_song, kpop_artist, kpop_song_artist WHERE kpop_artist.id = kpop_song_artist.kpop_artist_id AND"
+            " kpop_song.id = kpop_song_artist.kpop_song_id AND kpop_artist.artist = '{}'".format(artist)
         )
-        song = [row[0] for row in c.fetchall()]
+        song = [row for row in c.fetchall()]
     elif type == 'pop':
         c.execute(
-            "SELECT song, artist, link FROM users, pop_artist, users_pop WHERE pop.id = users_pop.pop_artist_id AND"
-            " users.id = users_pop.user_id AND user = '{}'".format(artist)
+            "SELECT song, pop_song.artist, link FROM pop_song, pop_artist, pop_song_artist WHERE pop_artist.id = pop_song_artist.pop_artist_id AND"
+            " pop_song.id = pop_song_artist.pop_song_id AND pop_artist.artist = '{}'".format(artist)
         )
-        song = [row[0] for row in c.fetchall()]
+        song = [row for row in c.fetchall()]
     return song
 
 def get_artist_list(c, type, user):
-    artist = []
+    artists = []
     if type == 'kpop':
         c.execute(
-            "SELECT artist FROM users, kpop_artist, users_kpop_artist WHERE kpop_artist.id = users_kpop.kpop_artist_id AND"
+            "SELECT artist FROM users, kpop_artist, users_kpop_artist WHERE kpop_artist.id = users_kpop_artist.kpop_artist_id AND"
             " users.id = users_kpop_artist.user_id AND user = '{}'".format(user)
         )
-        artist = [row[0] for row in c.fetchall()]
+        artists = [row[0] for row in c.fetchall()]
     elif type == 'pop':
         c.execute(
-            "SELECT artist FROM users, pop_artist, users_pop_artist WHERE pop.id = users_pop.pop_artist_id AND"
+            "SELECT artist FROM users, pop_artist, users_pop_artist WHERE pop_artist.id = users_pop_artist.pop_artist_id AND"
             " users.id = users_pop_artist.user_id AND user = '{}'".format(user)
         )
-        artist = [row[0] for row in c.fetchall()]
-    return artist
+        artists = [row[0] for row in c.fetchall()]
+    return artists
 
 def get_user_list(c, type, artist):
     user = []
@@ -150,9 +157,9 @@ def is_song(c, type, song_info):
     song = song_info[0]
     artist = song_info[1]
     if type == 'kpop':
-        c.execute("SELECT * FROM kpop_song WHERE song = ? and artist = ?", (song, artist))
+        c.execute("SELECT id FROM kpop_song WHERE song = ? and artist = ?", (song, artist))
     elif type == 'pop':
-        c.execute("SELECT * FROM pop_song WHERE song = ? and artist = ?", (song, artist))
+        c.execute("SELECT id FROM pop_song WHERE song = ? and artist = ?", (song, artist))
     return c.fetchone()
 
 def is_artist(c, type, artist):
@@ -168,4 +175,8 @@ def is_artist(c, type, artist):
 
 def is_user(c, user):
     c.execute("SELECT id FROM users WHERE user = '{}'".format(user))
-    return c.fetchone()
+    user_id = c.fetchone()
+    if user_id:
+        return user_id[0]
+    else:
+        return None
