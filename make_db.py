@@ -9,6 +9,18 @@ def make_db():
     )
 
     c.execute(
+        "CREATE TABLE IF NOT EXISTS charts ( `id` INTEGER PRIMARY KEY AUTOINCREMENT, `chart` TEXT )"
+    )
+    c.execute(
+        "CREATE TABLE IF NOT EXISTS users_charts ( `user_id` INTEGER, `charts_id` INTEGER, FOREIGN KEY(`user_id`)"
+        " REFERENCES `users`(`id`), FOREIGN KEY(`charts_id`) REFERENCES `charts`(`id`) )"
+    )
+    c.execute("SELECT * FROM users_charts")
+    if not c.fetchone():
+        for chart in ['melon', 'billboard']:
+            c.execute("INSERT INTO charts VALUES(NULL, '{}')".format(chart))
+
+    c.execute(
         "CREATE TABLE IF NOT EXISTS kpop_artist ( `id` INTEGER PRIMARY KEY AUTOINCREMENT, `artist` TEXT )"
     )
     c.execute(

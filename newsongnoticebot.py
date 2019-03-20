@@ -51,10 +51,48 @@ def chart(bot, update):
         '빌보드 차트에 새로 올라오는 노래 알림을 받고 싶다면 [/billboard_chart]를 터치해주세요.\n')
 
 def melon_chart(bot, update):
-    pass
+    chat_id = str(update.message['chat']['id'])
+    conn = sqlite3.connect('user_info.db')
+    c = conn.cursor()
+    user_id = is_user(c, chat_id)
+    if not user_id:
+        c.execute("INSERT INTO users VALUES(NULL, '{}')".format(chat_id))
+        user_id = c.lastrowid
+    artist_id = 1
+    c.execute("SELECT * FROM users_charts WHERE user_id = {}".format(user_id))
+    if c.fetchone():
+        c.execute("DELETE FROM users_charts WHERE user_id = {}".format(user_id))
+        update.message.reply_text("멜론 차트에 알림을 취소하셨습니다.\n"
+                                  "다시 신청하고 싶으시면 [/melon_chart]를 터치해주세요.")
+    else:
+        c.execute("INSERT INTO users_charts VALUES(?, ?)", (user_id, artist_id))
+        update.message.reply_text("앞으로 멜론 차트에 새로운 노래가 올라오면 보내도록 하겠습니다.\n"
+                                  "취소하고 싶으시면 [/melon_chart]을 터치해주세요.")
+    conn.commit()
+    c.close()
+    conn.close()
 
 def billboard_chart(bot, update):
-    pass
+    chat_id = str(update.message['chat']['id'])
+    conn = sqlite3.connect('user_info.db')
+    c = conn.cursor()
+    user_id = is_user(c, chat_id)
+    if not user_id:
+        c.execute("INSERT INTO users VALUES(NULL, '{}')".format(chat_id))
+        user_id = c.lastrowid
+    artist_id = 2
+    c.execute("SELECT * FROM users_charts WHERE user_id = {}".format(user_id))
+    if c.fetchone():
+        c.execute("DELETE FROM users_charts WHERE user_id = {}".format(user_id))
+        update.message.reply_text("빌보드 차트에 알림을 취소하셨습니다.\n"
+                                  "다시 신청하고 싶으시면 [/billboard_chart]를 터치해주세요.")
+    else:
+        c.execute("INSERT INTO users_charts VALUES(?, ?)", (user_id, artist_id))
+        update.message.reply_text("앞으로 빌보드 차트에 새로운 노래가 올라오면 보내도록 하겠습니다.\n"
+                                  "취소하고 싶으시면 [/billboard_chart]을 터치해주세요.")
+    conn.commit()
+    c.close()
+    conn.close()
 
 def new_download(bot, update):
     update.message.reply_text(
