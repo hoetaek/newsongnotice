@@ -159,7 +159,7 @@ def get_user_list(c, type, artist):
         user = [row[0] for row in c.fetchall()]
     elif type == 'pop':
         c.execute(
-            "SELECT user FROM users, pop_artist, users_pop_artist WHERE pop.id = users_pop_artist.pop_artist_id AND"
+            "SELECT user FROM users, pop_artist, users_pop_artist WHERE pop_artist.id = users_pop_artist.pop_artist_id AND"
             " users.id = users_pop_artist.user_id AND artist = '{}'".format(artist)
         )
         user = [row[0] for row in c.fetchall()]
