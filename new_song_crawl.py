@@ -198,12 +198,12 @@ class SongDownloadLink():
         c.close()
         conn.close()
 
-
 def get_youtube_url(keyword):
     url = 'https://www.youtube.com/results?search_query='+ urllib.parse.quote_plus(keyword)
     response = requests.get(url)
     html = response.text
     soup = BeautifulSoup(html, 'html.parser')
+
     for link in soup.findAll('a', {'class': 'yt-uix-tile-link'}):
         return 'https://www.youtube.com' + link.get('href')
 
@@ -213,8 +213,8 @@ if __name__=='__main__':
     Chrome.crawl_pop_song_list()
     schedule.every(3).minutes.do(get_kpop_100)
     schedule.every(3).minutes.do(get_pop_200)
-    schedule.every(1).minutes.do(Chrome.crawl_kpop_song_list)
-    schedule.every(3).minutes.do(Chrome.crawl_pop_song_list)
+    schedule.every(30).minutes.do(Chrome.crawl_kpop_song_list)
+    schedule.every(30).minutes.do(Chrome.crawl_pop_song_list)
 
     while True:
         schedule.run_pending()
