@@ -60,9 +60,9 @@ def melon_chart(bot, update):
         c.execute("INSERT INTO users VALUES(NULL, '{}')".format(chat_id))
         user_id = c.lastrowid
     chart_id = 1
-    c.execute("SELECT * FROM users_charts WHERE user_id = ?, chart_id = ?", (user_id, chart_id))
+    c.execute("SELECT * FROM users_charts WHERE user_id = ? and charts_id = ?", (user_id, chart_id))
     if c.fetchone():
-        c.execute("DELETE FROM users_charts WHERE user_id = ?, chart_id = ?", (user_id, chart_id))
+        c.execute("DELETE FROM users_charts WHERE user_id = ? and charts_id = ?", (user_id, chart_id))
         update.message.reply_text("멜론 차트에 알림을 취소하셨습니다.\n"
                                   "다시 신청하고 싶으시면 [/melon_chart]를 터치해주세요.")
     else:
@@ -83,9 +83,9 @@ def billboard_chart(bot, update):
         c.execute("INSERT INTO users VALUES(NULL, '{}')".format(chat_id))
         user_id = c.lastrowid
     chart_id = 2
-    c.execute("SELECT * FROM users_charts WHERE user_id = ?, chart_id = ?", (user_id, chart_id))
+    c.execute("SELECT * FROM users_charts WHERE user_id = ? and charts_id = ?", (user_id, chart_id))
     if c.fetchone():
-        c.execute("DELETE FROM users_charts WHERE user_id = ?, chart_id = ?", (user_id, chart_id))
+        c.execute("DELETE FROM users_charts WHERE user_id = ? and charts_id = ?", (user_id, chart_id))
         update.message.reply_text("빌보드 차트에 알림을 취소하셨습니다.\n"
                                   "다시 신청하고 싶으시면 [/billboard_chart]를 터치해주세요.\n"
                                   "다른 서비스를 다시 신청하고 싶으시면 [/help]를 터치해주세요.")
@@ -631,7 +631,7 @@ def startswith(pattern, word):
 
 if __name__=='__main__':
     token = '751248768:AAEJB5JcAh52nWfrSyKTEISGX8_teJIxNFw'
-    # token = "790146878:AAFKnWCnBV9WMSMYPnfcRXukmftgDyV_BlY" #this is a test bot
+    token = "790146878:AAFKnWCnBV9WMSMYPnfcRXukmftgDyV_BlY" #this is a test bot
 
     bot = Bot(token=token)
 
