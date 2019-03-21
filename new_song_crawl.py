@@ -9,7 +9,6 @@ import os
 import urllib.parse
 from telegram import Bot
 from make_db import get_user_list, insert_song, is_song
-from multiprocessing import Pool
 
 def get_kpop_100():
     headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36',}
@@ -172,11 +171,9 @@ class SongDownloadLink():
         new_song_info = [song for song in song_info if not is_song(c, type, song[1])]
         c.close()
         conn.close()
-        pool = Pool(processes=2)
-        pool.map(self.get_download_link, new_song_info)
-        # for i in new_song_info[:]:
-        #     if self.get_download_link(i) == 'remove':
-        #         new_song_info.remove(i)
+        for i in new_song_info[:]:
+            if self.get_download_link(i) == 'remove':
+                new_song_info.remove(i)
         if new_song_info and page_num < 25:
             self.crawl_pop_song_list(page_num=page_num + 1)
 
@@ -184,7 +181,6 @@ class SongDownloadLink():
         type, song = song_info[0], song_info[1]
         song_name = song[0]
         song_artist = song[1]
-        print(song[0], song[1])
         link = song[2]
         driver = self.start_driver()
         driver.get(link)
