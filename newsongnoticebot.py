@@ -234,7 +234,7 @@ def pop_artist_callback(bot, update):
     c = conn.cursor()
     user_artist = get_artist_list(c, 'pop', chat_id)
     c.execute("SELECT artist FROM pop_artist")
-    artist_option = sorted([artist[0] for artist in c.fetchall() if artist[0] not in user_artist and startswith(alph, artist[0])])
+    artist_option = sorted([artist[0] for artist in c.fetchall() if artist[0] not in user_artist and startswith(alph, artist[0][0])])
 
     artist_show_list = [InlineKeyboardButton(artist, callback_data="pop" + artist + ", " + select_f_name + ', ' + alph) for artist in
                         artist_option] + [InlineKeyboardButton('선택 종료', callback_data="pop" + "선택 종료" + ", " + select_f_name + ', ' + alph)]
@@ -486,6 +486,8 @@ def search_callback(bot, update):
     conn.close()
 
 def get_chosung(word):
+    chosung = ['ㄱ', 'ㄲ', 'ㄴ', 'ㄷ', 'ㄸ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅃ', 'ㅅ',
+               'ㅆ', 'ㅇ', 'ㅈ', 'ㅉ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ']
     for c in word:
         cc = ord(c) - 44032
         cho = cc // (21 * 28)
@@ -502,8 +504,7 @@ def startswith(pattern, word):
         word = get_chosung(word)
     return re.match(pattern, word, re.I)
 
-chosung = ['ㄱ', 'ㄲ', 'ㄴ', 'ㄷ', 'ㄸ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅃ', 'ㅅ',
-               'ㅆ', 'ㅇ', 'ㅈ', 'ㅉ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ']
+
 
 if __name__=='__main__':
     token = '751248768:AAEJB5JcAh52nWfrSyKTEISGX8_teJIxNFw'
