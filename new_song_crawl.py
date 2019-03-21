@@ -111,7 +111,7 @@ def get_pop_200():
 class SongDownloadLink():
     def start_driver(self):
         options = webdriver.ChromeOptions()
-        options.add_argument('headless')
+        # options.add_argument('headless')
         options.add_argument('window-size=1920x1080')
         options.add_argument("disable-gpu")
         return webdriver.Chrome('chromedriver', chrome_options=options)
@@ -181,6 +181,7 @@ class SongDownloadLink():
         type, song = song_info[0], song_info[1]
         song_name = song[0]
         song_artist = song[1]
+        print(song[0], song[1])
         link = song[2]
         driver = self.start_driver()
         driver.get(link)
@@ -245,7 +246,7 @@ bot = Bot(token=token)
 if __name__=='__main__':
     Chrome = SongDownloadLink()
     # Chrome.crawl_kpop_song_list()
-    Chrome.crawl_pop_song_list(page_num=15)
+    Chrome.crawl_pop_song_list(page_num=17)
     # for i in range(2):
     #     print(i)
     #     get_kpop_100()
