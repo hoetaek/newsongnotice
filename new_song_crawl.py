@@ -186,12 +186,12 @@ class SongDownloadLink():
 
         html_source = driver.page_source
         soup = BeautifulSoup(html_source, 'html.parser')
-        iframe_link = ""
         try:
             iframe_link = soup.select('iframe')[2]['src']
         except IndexError:
             print('db error')
             self.get_download_link(song_info)
+            return
         except KeyError:
             driver.quit()
             return 'remove'
@@ -233,8 +233,8 @@ bot = Bot(token=token)
 
 if __name__=='__main__':
     Chrome = SongDownloadLink()
-    # Chrome.crawl_kpop_song_list()
-    # Chrome.crawl_pop_song_list()
+    Chrome.crawl_kpop_song_list()
+    Chrome.crawl_pop_song_list()
     for i in range(2):
         print(i)
         get_kpop_100()
