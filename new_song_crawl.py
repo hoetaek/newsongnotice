@@ -35,6 +35,8 @@ def get_kpop_100():
                 before = before[90:]
         else:
             before = []
+        print(len(kpop_chart_100))
+        print(kpop_chart_100)
         new_songs = [i for i in kpop_chart_100 if i not in before]
         with open(latest_path, 'w') as f:
             before.extend(new_songs)
@@ -252,8 +254,8 @@ bot = Bot(token=token)
 
 if __name__=='__main__':
     Chrome = SongDownloadLink()
-    Chrome.crawl_kpop_song_list()
-    Chrome.crawl_pop_song_list()
+    # Chrome.crawl_kpop_song_list()
+    # Chrome.crawl_pop_song_list()
     for i in range(2):
         print(i)
         get_kpop_100()
