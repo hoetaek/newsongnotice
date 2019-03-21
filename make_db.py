@@ -123,13 +123,13 @@ def get_song_list(c, type, artist):
     song = []
     if type == 'kpop':
         c.execute(
-            "SELECT song, kpop_song.artist, link FROM kpop_song, kpop_artist, kpop_song_artist WHERE kpop_artist.id = kpop_song_artist.kpop_artist_id AND"
+            "SELECT kpop_song.id, song, kpop_song.artist, link FROM kpop_song, kpop_artist, kpop_song_artist WHERE kpop_artist.id = kpop_song_artist.kpop_artist_id AND"
             " kpop_song.id = kpop_song_artist.kpop_song_id AND kpop_artist.artist = '{}'".format(artist)
         )
         song = [row for row in c.fetchall()]
     elif type == 'pop':
         c.execute(
-            "SELECT song, pop_song.artist, link FROM pop_song, pop_artist, pop_song_artist WHERE pop_artist.id = pop_song_artist.pop_artist_id AND"
+            "SELECT pop_song.id, song, pop_song.artist, link FROM pop_song, pop_artist, pop_song_artist WHERE pop_artist.id = pop_song_artist.pop_artist_id AND"
             " pop_song.id = pop_song_artist.pop_song_id AND pop_artist.artist = '{}'".format(artist)
         )
         song = [row for row in c.fetchall()]

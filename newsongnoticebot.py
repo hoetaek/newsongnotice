@@ -115,7 +115,9 @@ def get_all_artists(bot, update):
     pop_artists = sorted([artist[0] for artist in c.fetchall()])
     update.message.reply_text(
         "한국 가수는 다음과 같이 있습니다.\n" +
-        ', '.join(kpop_artists) + '\n\n' +
+        ', '.join(kpop_artists)
+    )
+    update.message.reply_text(
         "팝송 가수는  다음과 같이 있습니다.\n" +
         ', '.join(pop_artists)
     )
@@ -521,14 +523,12 @@ def search_callback(bot, update):
 
     conn = sqlite3.connect('user_info.db')
     c = conn.cursor()
-    song_infos = get_song_list(c, song_type, artist) #TODO add song_id
+    song_infos = get_song_list(c, song_type, artist)
     c.close()
     conn.close()
     if len(song_infos) > 1:
-        print("more than one song")
-        option_song = [song_info[0] + ' - ' + song_info[1] for song_info in song_infos]
-        show_list = [InlineKeyboardButton(song.split(' - ')[0], callback_data="send, " + song_type + ", " + song) for song in option_song] \
-                    + [InlineKeyboardButton('get all', callback_data="send, " + song_type + ", " + "get all")]
+        show_list = [InlineKeyboardButton(song_info[2] + ' - ' + song_info[1], callback_data="send, " + song_type + ", " + str(song_info[0])) for song_info in song_infos] \
+                    + [InlineKeyboardButton('get all', callback_data="send, " + song_type + ", " + "get all, " + str(song_infos[0][0]))]
         menu = build_menu(show_list, 1)
         show_markup = InlineKeyboardMarkup(menu)
         bot.edit_message_text(text="{}이(가) 선택되었습니다.".format(artist),
@@ -536,13 +536,11 @@ def search_callback(bot, update):
                               message_id=update.callback_query.message.message_id,
                               reply_markup = show_markup)
     else:
-        print("one song")
         song_info = song_infos[0]
-        song = song_info[0]
-        artist = song_info[1]
-        link = song_info[2]
-        print(song, artist, link)
-        bot.edit_message_text(text="{}이(가) 선택되었습니다.".format(artist),
+        song = song_info[1]
+        artist = song_info[2]
+        link = song_info[3]
+        bot.edit_message_text(text="{}이(가) 선택되었습니다.".format(artist + ' - ' + song),
                               chat_id=update.callback_query.message.chat_id,
                               message_id=update.callback_query.message.message_id)
         bot.sendMessage(chat_id=update.callback_query.message.chat_id,
@@ -556,40 +554,44 @@ def search_callback(bot, update):
 def send_callback(bot, update):
     data = update.callback_query.data.split(', ')
     song_type = data[1]
-    song_info = data[2]
-    song_, artist_ = song_info.split(' - ')
+    song_id = data[-1]
     conn = sqlite3.connect('user_info.db')
     c = conn.cursor()
-    c.execute("SELECT link FROM {}_song WHERE song = ? and artist = ?".format(song_type), (song_, artist_))
-    link_ = c.fetchone()[0]
-    c.close()
-    conn.close()
-    if song_info == "get all":
-        song_infos = get_song_list(c, song_type, artist_)
-        bot.edit_message_text(text="{}이(가) 선택되었습니다.".format(song_info),
-                              chat_id=update.callback_query.message.chat_id,
-                              message_id=update.callback_query.message.message_id)
-        for song_info in song_infos:
-            song = song_info[0]
-            link = song_info[2]
-            bot.sendMessage(chat_id=update.callback_query.message.chat_id,
-                            text="곡 : " + artist_ + ' - ' + song + \
-                                 '\n유튜브 링크 : ' + get_youtube_url(song + ' ' + artist_) + \
-                                 '\n다운로드 링크 : ' + link + "\n\n")
-            bot.sendMessage(chat_id=update.callback_query.message.chat_id,
-                            text="다시 검색하시려면 [/search]를 터치해주세요."
-                                 "다른 서비스를 신청하고 싶으시면 [/help]를 터치해주세요.")
-    else:
-        bot.edit_message_text(text="{}이(가) 선택되었습니다.".format(artist_ + ' - ' + song_),
+    if len(data) == 3:
+        c.execute("SELECT song, artist, link FROM {}_song WHERE id = {}".format(song_type, song_id))
+        song, artist, link = c.fetchone()
+        print(song, artist, link)
+        bot.edit_message_text(text="{}이(가) 선택되었습니다.".format(artist + ' - ' + song),
                               chat_id=update.callback_query.message.chat_id,
                               message_id=update.callback_query.message.message_id)
         bot.sendMessage(chat_id=update.callback_query.message.chat_id,
-                        text="곡 : " + artist_ + ' - ' + song_ + \
-                             '\n유튜브 링크 : ' + get_youtube_url(song_ + ' ' + artist_) + \
-                             '\n다운로드 링크 : ' + link_ + "\n\n")
+                        text="곡 : " + artist + ' - ' + song + \
+                             '\n유튜브 링크 : ' + get_youtube_url(song + ' ' + artist) + \
+                             '\n다운로드 링크 : ' + link + "\n\n")
         bot.sendMessage(chat_id=update.callback_query.message.chat_id,
                         text="다시 검색하시려면 [/search]를 터치해주세요."
                              "다른 서비스를 신청하고 싶으시면 [/help]를 터치해주세요.")
+    else:
+        c.execute("SELECT artist FROM {}_song WHERE id = {}".format(song_type, song_id))
+        artist = c.fetchone()[0]
+        song_infos = get_song_list(c, song_type, artist)
+        bot.edit_message_text(text="{}이(가) 선택되었습니다.".format(artist),
+                              chat_id=update.callback_query.message.chat_id,
+                              message_id=update.callback_query.message.message_id)
+        for song_info in song_infos:
+            song = song_info[1]
+            link = song_info[3]
+            bot.sendMessage(chat_id=update.callback_query.message.chat_id,
+                            text="곡 : " + artist + ' - ' + song + \
+                                 '\n유튜브 링크 : ' + get_youtube_url(song + ' ' + artist) + \
+                                 '\n다운로드 링크 : ' + link + "\n\n")
+        bot.sendMessage(chat_id=update.callback_query.message.chat_id,
+                        text="다시 검색하시려면 [/search]를 터치해주세요."
+                             "다른 서비스를 신청하고 싶으시면 [/help]를 터치해주세요.")
+    c.close()
+    conn.close()
+
+
 
 def get_chosung(word):
     chosung = ['ㄱ', 'ㄲ', 'ㄴ', 'ㄷ', 'ㄸ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅃ', 'ㅅ',
