@@ -114,12 +114,25 @@ def get_all_artists(bot, update):
     c.execute("SELECT artist FROM pop_artist")
     pop_artists = sorted([artist[0] for artist in c.fetchall()])
     update.message.reply_text(
-        "한국 가수는 다음과 같이 있습니다.\n" +
-        ', '.join(kpop_artists)
+        "한국 가수는 다음과 같이 있습니다.\n"
+    )
+    chosung_list = sorted(
+        list(set(
+            [get_chosung(artist[0]) if is_hangul(artist[0]) else artist[0].upper() if artist[0].isalpha() else artist[0]
+             for artist in kpop_artists])))
+    update.message.reply_text(
+        "\n".join(
+            ["- " + ', '.join([artist for artist in kpop_artists if startswith(chosung, artist[0])]) for chosung in
+             chosung_list])
     )
     update.message.reply_text(
-        "팝송 가수는  다음과 같이 있습니다.\n" +
-        ', '.join(pop_artists)
+        "팝송 가수는  다음과 같이 있습니다.\n"
+    )
+    alphabet_list = sorted(list(set([artist[0].upper() if artist[0].isalpha() else artist[0] for artist in pop_artists])))
+    update.message.reply_text(
+        "\n".join(
+            ["- " + ', '.join([artist for artist in pop_artists if startswith(alphabet, artist[0])]) for alphabet in
+             alphabet_list])
     )
 
 def include_kpop_artist(bot, update):
@@ -127,7 +140,8 @@ def include_kpop_artist(bot, update):
     c = conn.cursor()
     c.execute("SELECT artist FROM kpop_artist")
     chosung_list = sorted(
-        list(set([get_chosung(artist[0][0]) if is_hangul(artist[0][0]) else artist[0][0].upper() if artist[0][0].isalpha() else artist[0][0] for artist in c.fetchall()])))
+        list(set([get_chosung(artist[0][0]) if is_hangul(artist[0][0]) else artist[0][0].upper() if artist[0][
+            0].isalpha() else artist[0][0] for artist in c.fetchall()])))
     hangul_show_list = [InlineKeyboardButton(han, callback_data="han, "+han) for han in chosung_list]
     menu = build_menu(hangul_show_list, 3)
     hangul_show_markup = InlineKeyboardMarkup(menu)
@@ -147,9 +161,8 @@ def kpop_artist_callback(bot, update):
     user_artist = get_artist_list(c, 'kpop', chat_id)
     c.execute("SELECT artist FROM kpop_artist")
     artist_option = sorted([artist[0] for artist in c.fetchall() if artist[0] not in user_artist and startswith(han, artist[0][0])])
-    artist_show_list = [InlineKeyboardButton(artist, callback_data="kp" + artist + ", " + select_f_name + ', ' + han)
-                        for artist in artist_option] + [InlineKeyboardButton('선택 종료', callback_data="kp" + "선택 종료"
-                                                                                                    + ", " + select_f_name + ', ' + han)]
+    artist_show_list = [InlineKeyboardButton(artist, callback_data="kp" + artist + ", " + select_f_name + ', ' + han) for artist in artist_option] \
+                       + [InlineKeyboardButton('선택 종료', callback_data="kp" + "선택 종료" + ", " + select_f_name + ', ' + han)]
     menu = build_menu(artist_show_list, 3)
     artist_show_markup = InlineKeyboardMarkup(menu)
     c.close()
