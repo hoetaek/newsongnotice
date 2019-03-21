@@ -108,9 +108,9 @@ def artist(bot, update):
     conn = sqlite3.connect('user_info.db')
     c = conn.cursor()
     c.execute("SELECT artist FROM kpop_artist")
-    kpop_artists = [artist[0] for artist in c.fetchall()]
+    kpop_artists = sorted([artist[0] for artist in c.fetchall()])
     c.execute("SELECT artist FROM pop_artist")
-    pop_artists = [artist[0] for artist in c.fetchall()]
+    pop_artists = sorted([artist[0] for artist in c.fetchall()])
     update.message.reply_text(
         "한국 가수는 다음과 같이 있습니다.\n" +
         ', '.join(kpop_artists) + '\n\n' +
@@ -477,8 +477,9 @@ def search_type_callback(bot, update):
         c.execute("SELECT artist FROM kpop_artist")
         artist_option = sorted([artist[0] for artist in c.fetchall() if startswith(han, artist[0][0])])
         artist_show_list = [InlineKeyboardButton(artist, callback_data="secall, kpop, " + artist)
-                            for artist in artist_option] + [InlineKeyboardButton('선택 취소', callback_data="secall, 선택 취소, 더미")]
-        menu = build_menu(artist_show_list, 3)
+                            for artist in artist_option]
+        menu = build_menu(artist_show_list, 3) +\
+               [[InlineKeyboardButton('이전', callback_data="artist_han")] + [InlineKeyboardButton('선택 취소', callback_data="secall, 선택 취소, 더미")]]
         artist_show_markup = InlineKeyboardMarkup(menu)
         bot.edit_message_text(text="{}이(가) 선택되었습니다.".format(han),
                               chat_id=update.callback_query.message.chat_id,
@@ -489,9 +490,9 @@ def search_type_callback(bot, update):
         alph = data[2]
         c.execute("SELECT artist FROM pop_artist")
         option_artist = sorted([artist[0] for artist in c.fetchall() if startswith(alph, artist[0][0])])
-        show_list = [InlineKeyboardButton(artist, callback_data="secall, pop, " + artist) for artist in option_artist]+\
-                         [InlineKeyboardButton('선택 취소', callback_data="secall, 선택 취소, 더미")]
-        menu = build_menu(show_list, 3)
+        show_list = [InlineKeyboardButton(artist, callback_data="secall, pop, " + artist) for artist in option_artist]
+        menu = build_menu(show_list, 3) +\
+               [[InlineKeyboardButton('이전', callback_data="artist_alph")] + [InlineKeyboardButton('선택 취소', callback_data="secall, 선택 취소, 더미")]]
         show_markup = InlineKeyboardMarkup(menu)
         bot.edit_message_text(text="{}이(가) 선택되었습니다.".format(alph),
                               chat_id=update.callback_query.message.chat_id,
@@ -507,7 +508,6 @@ def search_callback(bot, update):
     conn = sqlite3.connect('user_info.db')
     c = conn.cursor()
     if song_type == '선택 취소':
-        print('선택이 취소되었습니다')
         bot.edit_message_text(text="선택을 취소하셨습니다.",
                               chat_id=update.callback_query.message.chat_id,
                               message_id=update.callback_query.message.message_id)
@@ -558,7 +558,7 @@ def startswith(pattern, word):
 
 if __name__=='__main__':
     token = '751248768:AAEJB5JcAh52nWfrSyKTEISGX8_teJIxNFw'
-    # token = "790146878:AAFKnWCnBV9WMSMYPnfcRXukmftgDyV_BlY" #this is a test bot
+    token = "790146878:AAFKnWCnBV9WMSMYPnfcRXukmftgDyV_BlY" #this is a test bot
 
     bot = Bot(token=token)
 
