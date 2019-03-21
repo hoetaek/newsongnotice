@@ -59,14 +59,14 @@ def melon_chart(bot, update):
     if not user_id:
         c.execute("INSERT INTO users VALUES(NULL, '{}')".format(chat_id))
         user_id = c.lastrowid
-    artist_id = 1
-    c.execute("SELECT * FROM users_charts WHERE user_id = {}".format(user_id))
+    chart_id = 1
+    c.execute("SELECT * FROM users_charts WHERE user_id = ?, chart_id = ?", (user_id, chart_id))
     if c.fetchone():
-        c.execute("DELETE FROM users_charts WHERE user_id = {}".format(user_id))
+        c.execute("DELETE FROM users_charts WHERE user_id = ?, chart_id = ?", (user_id, chart_id))
         update.message.reply_text("멜론 차트에 알림을 취소하셨습니다.\n"
                                   "다시 신청하고 싶으시면 [/melon_chart]를 터치해주세요.")
     else:
-        c.execute("INSERT INTO users_charts VALUES(?, ?)", (user_id, artist_id))
+        c.execute("INSERT INTO users_charts VALUES(?, ?)", (user_id, chart_id))
         update.message.reply_text("앞으로 멜론 차트에 새로운 노래가 올라오면 보내도록 하겠습니다.\n"
                                   "취소하고 싶으시면 [/melon_chart]을 터치해주세요.\n"
                                   "다른 서비스를 다시 신청하고 싶으시면 [/help]를 터치해주세요.")
@@ -82,15 +82,15 @@ def billboard_chart(bot, update):
     if not user_id:
         c.execute("INSERT INTO users VALUES(NULL, '{}')".format(chat_id))
         user_id = c.lastrowid
-    artist_id = 2
-    c.execute("SELECT * FROM users_charts WHERE user_id = {}".format(user_id))
+    chart_id = 2
+    c.execute("SELECT * FROM users_charts WHERE user_id = ?, chart_id = ?", (user_id, chart_id))
     if c.fetchone():
-        c.execute("DELETE FROM users_charts WHERE user_id = {}".format(user_id))
+        c.execute("DELETE FROM users_charts WHERE user_id = ?, chart_id = ?", (user_id, chart_id))
         update.message.reply_text("빌보드 차트에 알림을 취소하셨습니다.\n"
                                   "다시 신청하고 싶으시면 [/billboard_chart]를 터치해주세요.\n"
                                   "다른 서비스를 다시 신청하고 싶으시면 [/help]를 터치해주세요.")
     else:
-        c.execute("INSERT INTO users_charts VALUES(?, ?)", (user_id, artist_id))
+        c.execute("INSERT INTO users_charts VALUES(?, ?)", (user_id, chart_id))
         update.message.reply_text("앞으로 빌보드 차트에 새로운 노래가 올라오면 보내도록 하겠습니다.\n"
                                   "취소하고 싶으시면 [/billboard_chart]을 터치해주세요.\n"
                                   "다른 서비스를 다시 신청하고 싶으시면 [/help]를 터치해주세요.")
