@@ -125,12 +125,10 @@ def kpop_artist_callback(bot, update):
     c = conn.cursor()
     user_artist = get_artist_list(c, 'kpop', chat_id)
     c.execute("SELECT artist FROM kpop_artist")
-    artist_option = sorted(
-        [artist[0] for artist in c.fetchall() if artist[0] not in user_artist and startswith(han, artist[0][0])])
+    artist_option = sorted([artist[0] for artist in c.fetchall() if artist[0] not in user_artist and startswith(han, artist[0][0])])
     artist_show_list = [InlineKeyboardButton(artist, callback_data="kp" + artist + ", " + select_f_name + ', ' + han)
-                        for artist in
-                        artist_option] + [InlineKeyboardButton('선택 종료',
-                                                               callback_data="kp" + "선택 종료" + ", " + select_f_name + ', ' + han)]
+                        for artist in artist_option] + [InlineKeyboardButton('선택 종료', callback_data="kp" + "선택 종료"
+                                                                                                    + ", " + select_f_name + ', ' + han)]
     menu = build_menu(artist_show_list, 3)
     artist_show_markup = InlineKeyboardMarkup(menu)
     c.close()
@@ -415,44 +413,35 @@ def exclude_callback(bot, update):
         update.message.reply_text("다른 서비스를 다시 신청하고 싶으시면 [/help]를 터치해주세요.")
 
 def search(bot, update):
-    types = ['k-pop', 'pop song']
-    show_list = [InlineKeyboardButton('k-pop', callback_data="st, " + 'k-pop'), InlineKeyboardButton('pop song', callback_data="artist_alph")]
+    show_list = [InlineKeyboardButton('k-pop', callback_data="artist_han"), InlineKeyboardButton('pop song', callback_data="artist_alph")]
     menu = build_menu(show_list, 1)
     show_markup = InlineKeyboardMarkup(menu)
     update.message.reply_text("찾고 싶은 곡의 종류를 선택해주세요.", reply_markup=show_markup)
 
-def search_type_callback(bot, update):
-    data = update.callback_query.data.split(', ')
-    data_selected = data[1]
+def kpop_artist_han_callback(bot, update):
     conn = sqlite3.connect('user_info.db')
     c = conn.cursor()
-    if data_selected == 'k-pop':
-        c.execute("SELECT artist FROM kpop_artist")
-        option_artist = sorted([artist[0] for artist in c.fetchall()])
-        show_list = [InlineKeyboardButton(artist, callback_data="sec, kpop, " + artist) for artist in option_artist]
-        menu = build_menu(show_list, 3)
-        show_markup = InlineKeyboardMarkup(menu)
-        bot.edit_message_text(text="{}가 선택되었습니다.".format(data_selected),
-                              chat_id=update.callback_query.message.chat_id,
-                              message_id=update.callback_query.message.message_id,
-                              reply_markup=show_markup)
-
-    elif data_selected == 'pop song':
-        alph = data[2]
-        c.execute("SELECT artist FROM pop_artist")
-        option_artist = sorted([artist[0] for artist in c.fetchall() if artist[0].startswith(alph)])
-        show_list = [InlineKeyboardButton(artist, callback_data="sec, pop, " + artist) for artist in option_artist]
-        menu = build_menu(show_list, 3)
-        show_markup = InlineKeyboardMarkup(menu)
-        bot.edit_message_text(text="{}가 선택되었습니다.".format(data_selected),
-                              chat_id=update.callback_query.message.chat_id,
-                              message_id=update.callback_query.message.message_id,
-                              reply_markup=show_markup)
-    c.close()
-    conn.close()
+    c.execute("SELECT artist FROM kpop_artist")
+    chosung_list = sorted(
+        list(set([get_chosung(artist[0][0]) if is_hangul(artist[0][0]) else artist[0][0].upper() if artist[0][
+            0].isalpha() else artist[0][0] for artist in c.fetchall()])))
+    chosung_show_list = [InlineKeyboardButton(han, callback_data="st, " + "k-pop, " + han) for han in
+                        chosung_list]
+    menu = build_menu(chosung_show_list, 3)
+    chosung_show_markup = InlineKeyboardMarkup(menu)
+    bot.edit_message_text(text="알림 받고 싶은 가수의 시작 알파벳을 선택해주세요.",
+                          chat_id=update.callback_query.message.chat_id,
+                          message_id=update.callback_query.message.message_id,
+                          reply_markup=chosung_show_markup)
 
 def pop_artist_alph_callback(bot, update):
-    alphabet_show_list = [InlineKeyboardButton(alph, callback_data="st, " + "pop song, " + alph) for alph in string.ascii_uppercase]
+    conn = sqlite3.connect('user_info.db')
+    c = conn.cursor()
+    c.execute("SELECT artist FROM pop_artist")
+    alphabet_list = sorted(
+        list(set([artist[0][0].upper() if artist[0][0].isalpha() else artist[0][0] for artist in c.fetchall()])))
+
+    alphabet_show_list = [InlineKeyboardButton(alph, callback_data="st, " + "pop song, " + alph) for alph in alphabet_list]
     menu = build_menu(alphabet_show_list, 3)
     alphabet_show_markup = InlineKeyboardMarkup(menu)
     bot.edit_message_text(text="알림 받고 싶은 가수의 시작 알파벳을 선택해주세요.",
@@ -460,16 +449,61 @@ def pop_artist_alph_callback(bot, update):
                                      message_id=update.callback_query.message.message_id,
                                      reply_markup=alphabet_show_markup)
 
+def search_type_callback(bot, update):
+    data = update.callback_query.data.split(', ')
+    data_selected = data[1]
+    conn = sqlite3.connect('user_info.db')
+    c = conn.cursor()
+    if data_selected == 'k-pop':
+        han = data[2]
+        c.execute("SELECT artist FROM kpop_artist")
+
+        c.execute("SELECT artist FROM kpop_artist")
+        artist_option = sorted([artist[0] for artist in c.fetchall() if startswith(han, artist[0][0])])
+        artist_show_list = [InlineKeyboardButton(artist, callback_data="secall, kpop, " + artist)
+                            for artist in artist_option] + [InlineKeyboardButton('선택 취소', callback_data="secall, 선택 취소, 더미")]
+        menu = build_menu(artist_show_list, 3)
+        artist_show_markup = InlineKeyboardMarkup(menu)
+        bot.edit_message_text(text="{}이(가) 선택되었습니다.".format(han),
+                              chat_id=update.callback_query.message.chat_id,
+                              message_id=update.callback_query.message.message_id,
+                              reply_markup=artist_show_markup)
+
+    elif data_selected == 'pop song':
+        alph = data[2]
+        c.execute("SELECT artist FROM pop_artist")
+        option_artist = sorted([artist[0] for artist in c.fetchall() if startswith(alph, artist[0][0])])
+        show_list = [InlineKeyboardButton(artist, callback_data="secall, pop, " + artist) for artist in option_artist]+\
+                         [InlineKeyboardButton('선택 취소', callback_data="secall, 선택 취소, 더미")]
+        menu = build_menu(show_list, 3)
+        show_markup = InlineKeyboardMarkup(menu)
+        bot.edit_message_text(text="{}이(가) 선택되었습니다.".format(alph),
+                              chat_id=update.callback_query.message.chat_id,
+                              message_id=update.callback_query.message.message_id,
+                              reply_markup=show_markup)
+    c.close()
+    conn.close()
+
 def search_callback(bot, update):
     data = update.callback_query.data.split(', ')
     song_type = data[1]
     data_selected = data[2]
     conn = sqlite3.connect('user_info.db')
     c = conn.cursor()
+    if song_type == '선택 취소':
+        print('선택이 취소되었습니다')
+        bot.edit_message_text(text="선택을 취소하셨습니다.",
+                              chat_id=update.callback_query.message.chat_id,
+                              message_id=update.callback_query.message.message_id)
+        bot.sendMessage(chat_id=update.callback_query.message.chat_id,
+                        text="다시 검색하시려면 [/search]를 터치해주세요\n"
+                             "다른 서비스를 신청하고 싶으시면 [/help]를 터치해주세요.")
+        c.close()
+        conn.close()
+        return
     bot.edit_message_text(text="{}가 선택되었습니다.".format(data_selected),
                           chat_id=update.callback_query.message.chat_id,
                           message_id=update.callback_query.message.message_id)
-
     song_infos = get_song_list(c, song_type, data_selected)
     for song_info in song_infos:
         song_name = song_info[0]
@@ -536,12 +570,17 @@ if __name__=='__main__':
 
     updater.dispatcher.add_handler(CallbackQueryHandler(exclude_callback,
                                                         pattern='^ex'))
-    updater.dispatcher.add_handler(CallbackQueryHandler(search_type_callback,
-                                                        pattern='^st'))
+
+
+
     updater.dispatcher.add_handler(CallbackQueryHandler(search_callback,
-                                                        pattern='^sec'))
+                                                        pattern='^secall'))
     updater.dispatcher.add_handler(CallbackQueryHandler(pop_artist_alph_callback,
                                                         pattern='^artist_alph'))
+    updater.dispatcher.add_handler(CallbackQueryHandler(kpop_artist_han_callback,
+                                                        pattern='^artist_han'))
+    updater.dispatcher.add_handler(CallbackQueryHandler(search_type_callback,
+                                                        pattern='^st'))
 
     updater.start_polling()
     updater.idle()

@@ -233,9 +233,10 @@ bot = Bot(token=token)
 
 if __name__=='__main__':
     Chrome = SongDownloadLink()
-    Chrome.crawl_kpop_song_list()
-    Chrome.crawl_pop_song_list()
+    # Chrome.crawl_kpop_song_list()
+    # Chrome.crawl_pop_song_list()
     for i in range(2):
+        print(i)
         get_kpop_100()
         get_pop_200()
     schedule.every(3).minutes.do(get_kpop_100)
