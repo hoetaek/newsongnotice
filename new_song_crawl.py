@@ -16,14 +16,15 @@ def get_kpop_100():
     selectors = [['#lst50 > td:nth-child(6) > div > div > div.ellipsis.rank01 > span > a', '#lst50 > td:nth-child(6) > div > div > div.ellipsis.rank02 > span'],
                  ['#lst100 > td:nth-child(6) > div > div > div.ellipsis.rank01 > span > a', '#lst100 > td:nth-child(6) > div > div > div.ellipsis.rank02 > span']]
     for title_sel, artist_sel in selectors:
-        # options = webdriver.ChromeOptions()
-        # options.add_argument('headless')
-        # options.add_argument('window-size=1920x1080')
-        # options.add_argument("disable-gpu")
-        # driver = webdriver.Chrome('chromedriver', chrome_options=options)
-        # driver.get("https://www.melon.com/chart/index.htm")
-        # html = driver.page_source
-        # driver.quit()
+        options = webdriver.ChromeOptions()
+        options.add_argument('headless')
+        options.add_argument('window-size=1920x1080')
+        options.add_argument("disable-gpu")
+        driver = webdriver.Chrome('chromedriver', chrome_options=options)
+        driver.get("https://www.melon.com/chart/index.htm")
+        html = driver.page_source
+        print(html)
+        driver.quit()
 
         cookies = {
             'SCOUTER': 'x3mttqnd87j5f9',
@@ -284,7 +285,7 @@ if __name__=='__main__':
         print(i)
         get_kpop_100()
         get_pop_200()
-    schedule.every(3).minutes.do(get_kpop_100)
+    schedule.every(300).minutes.do(get_kpop_100)
     schedule.every(3).minutes.do(get_pop_200)
     schedule.every(30).minutes.do(Chrome.crawl_kpop_song_list)
     schedule.every(30).minutes.do(Chrome.crawl_pop_song_list)
