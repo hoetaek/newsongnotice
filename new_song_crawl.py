@@ -172,7 +172,7 @@ class SongDownloadLink():
         new_song_info = [song for song in song_info if not is_song(c, type, song[1])]
         c.close()
         conn.close()
-        pool = Pool(processes=4)
+        pool = Pool(processes=2)
         pool.map(self.get_download_link, new_song_info)
         # for i in new_song_info[:]:
         #     if self.get_download_link(i) == 'remove':
