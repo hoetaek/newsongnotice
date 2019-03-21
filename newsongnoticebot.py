@@ -561,7 +561,7 @@ def search_callback(bot, update):
                               message_id=update.callback_query.message.message_id)
         bot.sendMessage(chat_id=update.callback_query.message.chat_id,
                         text="곡 : " + artist + ' - ' + song + \
-                             '\n유튜브 링크 : ' + get_youtube_url(song) + \
+                             '\n유튜브 링크 : ' + get_youtube_url(artist + ' - ' + song) + \
                              '\n다운로드 링크 : ' + link + "\n\n")
         bot.sendMessage(chat_id=update.callback_query.message.chat_id,
                         text="다시 검색하시려면 [/search]를 터치해주세요."
@@ -581,7 +581,7 @@ def send_callback(bot, update):
                               message_id=update.callback_query.message.message_id)
         bot.sendMessage(chat_id=update.callback_query.message.chat_id,
                         text="곡 : " + artist + ' - ' + song + \
-                             '\n유튜브 링크 : ' + get_youtube_url(song + ' ' + artist) + \
+                             '\n유튜브 링크 : ' + get_youtube_url(artist + ' - ' + song) + \
                              '\n다운로드 링크 : ' + link + "\n\n")
         bot.sendMessage(chat_id=update.callback_query.message.chat_id,
                         text="다시 검색하시려면 [/search]를 터치해주세요."
@@ -598,7 +598,7 @@ def send_callback(bot, update):
             link = song_info[3]
             bot.sendMessage(chat_id=update.callback_query.message.chat_id,
                             text="곡 : " + artist + ' - ' + song + \
-                                 '\n유튜브 링크 : ' + get_youtube_url(song + ' ' + artist) + \
+                                 '\n유튜브 링크 : ' + get_youtube_url(artist + ' - ' + song) + \
                                  '\n다운로드 링크 : ' + link + "\n\n")
         bot.sendMessage(chat_id=update.callback_query.message.chat_id,
                         text="다시 검색하시려면 [/search]를 터치해주세요."

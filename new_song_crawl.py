@@ -245,17 +245,17 @@ bot = Bot(token=token)
 
 if __name__=='__main__':
     Chrome = SongDownloadLink()
-    # Chrome.crawl_kpop_song_list()
-    Chrome.crawl_pop_song_list(page_num=15)
-    # for i in range(2):
-    #     print(i)
-    #     get_kpop_100()
-    #     get_pop_200()
-    # schedule.every(3).minutes.do(get_kpop_100)
-    # schedule.every(3).minutes.do(get_pop_200)
-    # schedule.every(30).minutes.do(Chrome.crawl_kpop_song_list)
-    # schedule.every(30).minutes.do(Chrome.crawl_pop_song_list)
-    #
-    # while True:
-    #     schedule.run_pending()
-    #     time.sleep(1)
+    Chrome.crawl_kpop_song_list()
+    Chrome.crawl_pop_song_list()
+    for i in range(2):
+        print(i)
+        get_kpop_100()
+        get_pop_200()
+    schedule.every(3).minutes.do(get_kpop_100)
+    schedule.every(3).minutes.do(get_pop_200)
+    schedule.every(30).minutes.do(Chrome.crawl_kpop_song_list)
+    schedule.every(30).minutes.do(Chrome.crawl_pop_song_list)
+
+    while True:
+        schedule.run_pending()
+        time.sleep(1)
