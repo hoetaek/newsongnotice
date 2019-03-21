@@ -20,7 +20,8 @@ def start(bot, update):
         '안녕하세요.\n'
         '새로운 노래 알림봇을 추가해주셔서 감사합니다.\n'
         '차트에 새로 올라오는 노래 알림을 받고 싶다면 [/chart]를 터치해주세요.\n'
-        '새로운 곡 다운로드 링크 알림을 받고 싶으시면 [/new_download]를 터치해주세요\n')
+        '새로운 곡 다운로드 링크 알림을 받고 싶으시면 [/new_download]를 터치해주세요\n'
+        '도움이 필요하시면 [/help]를 터치해주세요.')
 
 def stop(bot, update):
     chat_id = str(update.message['chat']['id'])
@@ -99,7 +100,22 @@ def new_download(bot, update):
         '케이팝 신곡 알림을 받고 싶다면 [/include_kpop_artist]를 터치해주세요.\n'
         '팝송 신곡 알림을 받고 싶다면 [/include_pop_artist]를 터치해주세요.\n'
         '신청한 가수를 확인하고 싶다면 [/check_artist]를 터치해주세요.\n'
-        '신청 목록에서 제외하고 싶은 가수가 있다면 [/exclude_artist]를 터치해주세요.\n'
+        '신청 목록에서 제외하고 싶은 가수가 있다면 [/exclude_artist]를 터치해주세요.\n\n'
+        '신청 가능한 가수들이 궁금하다면 [/artist]를 터치해주세요.'
+    )
+
+def artist(bot, update):
+    conn = sqlite3.connect('user_info.db')
+    c = conn.cursor()
+    c.execute("SELECT artist FROM kpop_artist")
+    kpop_artists = [artist[0] for artist in c.fetchall()]
+    c.execute("SELECT artist FROM pop_artist")
+    pop_artists = [artist[0] for artist in c.fetchall()]
+    update.message.reply_text(
+        "한국 가수는 다음과 같이 있습니다.\n" +
+        ', '.join(kpop_artists) +
+        "팝송 가수는  다음과 같이 있습니다.\n" +
+        ', '.join(pop_artists)
     )
 
 def include_kpop_artist(bot, update):
@@ -550,6 +566,7 @@ if __name__=='__main__':
     updater.dispatcher.add_handler(CommandHandler('start', start))
     updater.dispatcher.add_handler(CommandHandler('stop', stop))
     updater.dispatcher.add_handler(CommandHandler('help', help))
+    updater.dispatcher.add_handler(CommandHandler('artist', artist))
     updater.dispatcher.add_handler(CommandHandler('search', search))
     updater.dispatcher.add_handler(CommandHandler('chart', chart))
     updater.dispatcher.add_handler(CommandHandler('melon_chart', melon_chart))

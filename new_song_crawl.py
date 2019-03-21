@@ -190,6 +190,7 @@ class SongDownloadLink():
             iframe_link = soup.select('iframe')[2]['src']
         except IndexError:
             print('db error')
+            driver.quit()
             self.get_download_link(song_info)
             return
         except KeyError:
