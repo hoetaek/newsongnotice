@@ -113,7 +113,7 @@ def artist(bot, update):
     pop_artists = [artist[0] for artist in c.fetchall()]
     update.message.reply_text(
         "한국 가수는 다음과 같이 있습니다.\n" +
-        ', '.join(kpop_artists) +
+        ', '.join(kpop_artists) + '\n\n' +
         "팝송 가수는  다음과 같이 있습니다.\n" +
         ', '.join(pop_artists)
     )
