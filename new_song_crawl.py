@@ -36,23 +36,20 @@ def get_kpop_100():
             before.extend(new_songs)
             data['kpop'] = before
             json.dump(data, f)
-        if new_songs:
-            print("new song")
-            conn = sqlite3.connect('user_info.db')
-            c = conn.cursor()
-            c.execute("SELECT user FROM users, charts, users_charts WHERE charts.id = users_charts.charts_id AND"
-                      " users.id = users_charts.user_id AND chart = '{}'".format("melon"))
-            user_list = [user[0] for user in c.fetchall()]
-            print(user_list)
-            for chat_id in user_list:
-                for song in new_songs:
-                    bot.sendMessage(chat_id=chat_id,  # 580916113
-                                    text= "멜론 차트에 새로운 곡이 올라왔습니다\n" +
-                                          song[1] + ' - ' + song[0] + '\n' +
-                                          get_youtube_url(song[1] + ' - ' + song[0]) +
-                                          "\n알림을 그만 받고 싶다면 [/stop]을 터치해주세요.")
-            c.close()
-            conn.close()
+        conn = sqlite3.connect('user_info.db')
+        c = conn.cursor()
+        c.execute("SELECT user FROM users, charts, users_charts WHERE charts.id = users_charts.charts_id AND"
+                  " users.id = users_charts.user_id AND chart = '{}'".format("melon"))
+        user_list = [user[0] for user in c.fetchall()]
+        for chat_id in user_list:
+            for song in new_songs:
+                bot.sendMessage(chat_id=chat_id,  # 580916113
+                                text= "멜론 차트에 새로운 곡이 올라왔습니다\n" +
+                                      song[1] + ' - ' + song[0] + '\n' +
+                                      get_youtube_url(song[1] + ' - ' + song[0]) +
+                                      "\n알림을 그만 받고 싶다면 [/stop]을 터치해주세요.")
+        c.close()
+        conn.close()
         # for test
         # with open(latest_path, 'w') as f:
         #     data['kpop'] = []
@@ -60,6 +57,8 @@ def get_kpop_100():
     else:
         with open(latest_path, 'w') as f:
             json.dump({'kpop': []}, f)
+        get_kpop_100()
+        return
 
 def get_pop_200():
     latest_path = os.path.join(BASE_DIR, 'latest.json')
@@ -86,22 +85,21 @@ def get_pop_200():
             before.extend(new_songs)
             data['pop'] = before
             json.dump(data, f)
-        if new_songs:
-            conn = sqlite3.connect('user_info.db')
-            c = conn.cursor()
-            c.execute("SELECT user FROM users, charts, users_charts WHERE charts.id = users_charts.charts_id AND"
-            " users.id = users_charts.user_id AND chart = '{}'".format("billboard"))
-            user_list = [user[0] for user in c.fetchall()]
-            for chat_id in user_list:
-                for song in new_songs:
-                    bot.sendMessage(chat_id= chat_id, #"580916113",
-                                    text= "빌보드 차트에 새로운 곡이 올라왔습니다\n" +
-                                          song + '\n' +
-                                          get_youtube_url(song) +
-                                          "\n알림을 그만 받고 싶다면 [/stop]을 터치해주세요.")
+        conn = sqlite3.connect('user_info.db')
+        c = conn.cursor()
+        c.execute("SELECT user FROM users, charts, users_charts WHERE charts.id = users_charts.charts_id AND"
+        " users.id = users_charts.user_id AND chart = '{}'".format("billboard"))
+        user_list = [user[0] for user in c.fetchall()]
+        for chat_id in user_list:
+            for song in new_songs:
+                bot.sendMessage(chat_id= chat_id, #"580916113",
+                                text= "빌보드 차트에 새로운 곡이 올라왔습니다\n" +
+                                      song + '\n' +
+                                      get_youtube_url(song) +
+                                      "\n알림을 그만 받고 싶다면 [/stop]을 터치해주세요.")
 
-            c.close()
-            conn.close()
+        c.close()
+        conn.close()
         # for test
         # with open(latest_path, 'w') as f:
         #     data['kpop'] = []
@@ -109,6 +107,8 @@ def get_pop_200():
     else:
         with open(latest_path, 'w') as f:
             json.dump({'pop': []}, f)
+        get_kpop_100()
+        return
 
 class SongDownloadLink():
     def start_driver(self):
@@ -239,6 +239,7 @@ def get_youtube_url(keyword):
     for link in soup.findAll('a', {'class': 'yt-uix-tile-link'}):
         if link.get('href').startswith('/watch'):
             return 'https://www.youtube.com' + link.get('href')
+    return "no youtube link"
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 token = '751248768:AAEJB5JcAh52nWfrSyKTEISGX8_teJIxNFw'
