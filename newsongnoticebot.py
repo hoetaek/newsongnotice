@@ -27,11 +27,13 @@ def stop(bot, update):
     conn = sqlite3.connect('user_info.db')
     c = conn.cursor()
 
-    user = is_user(c, chat_id)
-    if user:
-        user_id = user[0]
-        c.execute("DELETE FROM users_kpop WHERE user_id = {}".format(user_id))
-        c.execute("DELETE FROM users_pop WHERE user_id = {}".format(user_id))
+    user_id = is_user(c, chat_id)
+    if not user_id:
+        c.execute("INSERT INTO users VALUES(NULL, '{}')".format(chat_id))
+        user_id = c.lastrowid
+    c.execute("DELETE FROM users_charts WHERE user_id = {}".format(user_id))
+    c.execute("DELETE FROM users_kpop_artist WHERE user_id = {}".format(user_id))
+    c.execute("DELETE FROM users_pop_artist WHERE user_id = {}".format(user_id))
     conn.commit()
     c.close()
     conn.close()
