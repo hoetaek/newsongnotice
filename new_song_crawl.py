@@ -225,7 +225,8 @@ def get_youtube_url(keyword):
     soup = BeautifulSoup(html, 'html.parser')
 
     for link in soup.findAll('a', {'class': 'yt-uix-tile-link'}):
-        return 'https://www.youtube.com' + link.get('href')
+        if link.get('href').startswith('/watch'):
+            return 'https://www.youtube.com' + link.get('href')
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 token = '751248768:AAEJB5JcAh52nWfrSyKTEISGX8_teJIxNFw'
