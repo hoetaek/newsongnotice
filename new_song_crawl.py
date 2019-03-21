@@ -184,6 +184,7 @@ class SongDownloadLink():
         type, song = song_info[0], song_info[1]
         song_name = song[0]
         song_artist = song[1]
+        print(song[0], song[1])
         link = song[2]
         driver = self.start_driver()
         driver.get(link)
