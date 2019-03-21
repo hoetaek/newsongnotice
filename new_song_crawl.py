@@ -41,6 +41,7 @@ def get_kpop_100():
         c.execute("SELECT user FROM users, charts, users_charts WHERE charts.id = users_charts.charts_id AND"
                   " users.id = users_charts.user_id AND chart = '{}'".format("melon"))
         user_list = [user[0] for user in c.fetchall()]
+        print("kpop", user_list)
         for chat_id in user_list:
             for song in new_songs:
                 bot.sendMessage(chat_id=chat_id,  # 580916113
@@ -90,6 +91,7 @@ def get_pop_200():
         c.execute("SELECT user FROM users, charts, users_charts WHERE charts.id = users_charts.charts_id AND"
         " users.id = users_charts.user_id AND chart = '{}'".format("billboard"))
         user_list = [user[0] for user in c.fetchall()]
+        print("pop", user_list)
         for chat_id in user_list:
             for song in new_songs:
                 bot.sendMessage(chat_id= chat_id, #"580916113",
