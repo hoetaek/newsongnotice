@@ -87,7 +87,8 @@ def billboard_chart(bot, update):
     if c.fetchone():
         c.execute("DELETE FROM users_charts WHERE user_id = {}".format(user_id))
         update.message.reply_text("빌보드 차트에 알림을 취소하셨습니다.\n"
-                                  "다시 신청하고 싶으시면 [/billboard_chart]를 터치해주세요.")
+                                  "다시 신청하고 싶으시면 [/billboard_chart]를 터치해주세요.\n"
+                                  "다른 서비스를 다시 신청하고 싶으시면 [/help]를 터치해주세요.")
     else:
         c.execute("INSERT INTO users_charts VALUES(?, ?)", (user_id, artist_id))
         update.message.reply_text("앞으로 빌보드 차트에 새로운 노래가 올라오면 보내도록 하겠습니다.\n"
@@ -134,6 +135,8 @@ def get_all_artists(bot, update):
             ["- " + ', '.join([artist for artist in pop_artists if startswith(alphabet, artist[0])]) for alphabet in
              alphabet_list])
     )
+    bot.sendMessage(chat_id=str(update.callback_query.message.chat_id),
+                    text="다른 서비스를 신청하고 싶으시면 [/help]를 터치해주세요.")
 
 def include_kpop_artist(bot, update):
     conn = sqlite3.connect('user_info.db')
@@ -573,7 +576,6 @@ def send_callback(bot, update):
     if len(data) == 3:
         c.execute("SELECT song, artist, link FROM {}_song WHERE id = {}".format(song_type, song_id))
         song, artist, link = c.fetchone()
-        print(song, artist, link)
         bot.edit_message_text(text="{}이(가) 선택되었습니다.".format(artist + ' - ' + song),
                               chat_id=update.callback_query.message.chat_id,
                               message_id=update.callback_query.message.message_id)

@@ -9,6 +9,7 @@ import os
 import urllib.parse
 from telegram import Bot
 from make_db import get_user_list, insert_song, is_song
+from multiprocessing import Pool
 
 def get_kpop_100():
     headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36',}
@@ -171,8 +172,11 @@ class SongDownloadLink():
         new_song_info = [song for song in song_info if not is_song(c, type, song[1])]
         c.close()
         conn.close()
-        for i in new_song_info:
-            self.get_download_link(i)
+        pool = Pool(processes=4)
+        pool.map(self.get_download_link, new_song_info)
+        # for i in new_song_info[:]:
+        #     if self.get_download_link(i) == 'remove':
+        #         new_song_info.remove(i)
         if new_song_info and page_num < 25:
             self.crawl_pop_song_list(page_num=page_num + 1)
 
@@ -194,16 +198,24 @@ class SongDownloadLink():
             self.get_download_link(song_info)
             return
         except KeyError:
+            a_tag = soup.select("[target='_blank']")[0]
+            if a_tag:
+                iframe_link = a_tag['href']
+            else:
+                driver.quit()
+                return 'remove'
+        if iframe_link.startswith('..'):
+            url = "https://lover.ne.kr:124" + iframe_link[2:].replace('/link', '').strip()
+            driver.get(url)
+            html_source = driver.page_source
             driver.quit()
-            return 'remove'
-        url = "https://lover.ne.kr:124" + iframe_link[2:].replace('/link', '').strip()
-        driver.get(url)
-        html_source = driver.page_source
-        driver.quit()
-        soup = BeautifulSoup(html_source, 'html.parser')
-        download_soup = soup.select("script[type='text/javascript']")[-1]
-        download_link = re.findall('https://.*"', str(download_soup))[0][:-1]
-        song[2] = download_link
+            soup = BeautifulSoup(html_source, 'html.parser')
+            download_soup = soup.select("script[type='text/javascript']")[-1]
+            download_link = re.findall('https://.*"', str(download_soup))[0][:-1]
+            song[2] = download_link
+        else:
+            driver.quit()
+            song[2] = iframe_link
 
         conn = sqlite3.connect('user_info.db')
         c = conn.cursor()
@@ -212,7 +224,7 @@ class SongDownloadLink():
             bot.sendMessage(chat_id= chat_id, #"580916113",
                             text= "곡: " + song_artist + " - " + song_name +
                                   '\n유튜브 링크 : ' + get_youtube_url(song_artist + " - " + song_name) +
-                                  '\n다운로드 링크 : ' + download_link)
+                                  '\n다운로드 링크 : ' + song[2])
 
         conn.commit()
         c.close()
@@ -235,17 +247,17 @@ bot = Bot(token=token)
 
 if __name__=='__main__':
     Chrome = SongDownloadLink()
-    Chrome.crawl_kpop_song_list()
-    Chrome.crawl_pop_song_list()
-    for i in range(2):
-        print(i)
-        get_kpop_100()
-        get_pop_200()
-    schedule.every(3).minutes.do(get_kpop_100)
-    schedule.every(3).minutes.do(get_pop_200)
-    schedule.every(30).minutes.do(Chrome.crawl_kpop_song_list)
-    schedule.every(30).minutes.do(Chrome.crawl_pop_song_list)
-
-    while True:
-        schedule.run_pending()
-        time.sleep(1)
+    # Chrome.crawl_kpop_song_list()
+    Chrome.crawl_pop_song_list(page_num=15)
+    # for i in range(2):
+    #     print(i)
+    #     get_kpop_100()
+    #     get_pop_200()
+    # schedule.every(3).minutes.do(get_kpop_100)
+    # schedule.every(3).minutes.do(get_pop_200)
+    # schedule.every(30).minutes.do(Chrome.crawl_kpop_song_list)
+    # schedule.every(30).minutes.do(Chrome.crawl_pop_song_list)
+    #
+    # while True:
+    #     schedule.run_pending()
+    #     time.sleep(1)
