@@ -22,6 +22,9 @@ def get_kpop_100():
         html = response.text
         soup = BeautifulSoup(html, 'html.parser')
         kpop_chart_100.extend([[title.text, artist.text] for title, artist in zip(soup.select(title_sel), soup.select(artist_sel))])
+    if not kpop_chart_100:
+        bot.sendMessage(chat_id="580916113",
+                        text="멜론 차트 크롤링이 막혔습니다.\n")
     if os.path.exists(latest_path):
         with open(latest_path) as f:
             data = json.load(f)
