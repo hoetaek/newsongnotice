@@ -143,7 +143,6 @@ class SongDownloadLink():
               "&sn=off&ss=on&sc=on&keyword=&sn1=&divpage=1".format(current_page)
         song_type = 'kpop'
         driver = self.start_driver()
-        driver.find_element_by_css_selector()
         driver.get(url)
         html_source = driver.page_source
         soup = BeautifulSoup(html_source, 'html.parser')
