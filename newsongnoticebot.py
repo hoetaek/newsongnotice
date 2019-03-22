@@ -20,6 +20,7 @@ def start(bot, update):
         '새로운 노래 알림봇을 추가해주셔서 감사합니다.\n'
         '차트에 새로 올라오는 노래 알림을 받고 싶다면 [/chart]를 터치해주세요.\n'
         '새로운 곡 다운로드 링크 알림을 받고 싶으시면 [/new_download]를 터치해주세요\n'
+        '노래를 찾고 싶으시면 [/search]를 터치해주세요\n'
         '도움이 필요하시면 [/help]를 터치해주세요.')
 
 def stop(bot, update):
@@ -46,7 +47,7 @@ def help(bot, update):
         '차트에 새로 올라오는 노래 알림을 받고 싶다면 [/chart]를 터치해주세요.\n'
         '새로운 곡 다운로드 링크 알림을 받고 싶으시면 [/new_download]를 터치해주세요\n'
         '노래를 찾고 싶으시면 [/search]를 터치해주세요.\n\n'
-        '신청 가능한 가수들이 궁금하시면 [/artist]를 터치해주세요.')
+        '신청 가능한 가수들이 궁금하시면 [/all_artists]를 터치해주세요.')
 
 def chart(bot, update):
     update.message.reply_text(
@@ -107,7 +108,7 @@ def new_download(bot, update):
         '팝송 신곡 알림을 받고 싶다면 [/include_pop_artist]를 터치해주세요.\n'
         '신청한 가수를 확인하고 싶다면 [/check_artist]를 터치해주세요.\n'
         '신청 목록에서 제외하고 싶은 가수가 있다면 [/exclude_artist]를 터치해주세요.\n\n'
-        '신청 가능한 가수들이 궁금하시면 [/artist]를 터치해주세요.'
+        '신청 가능한 가수들이 궁금하시면 [/all_artists]를 터치해주세요.'
     )
 
 def get_all_artists(bot, update):
@@ -164,13 +165,13 @@ def include_kpop_artist(bot, update):
     c = conn.cursor()
     c.execute("SELECT artist FROM kpop_artist")
     chosung_list = sorted(
-        list(set([get_chosung(artist[0][0]) if is_hangul(artist[0][0]) else artist[0][0].upper() if artist[0][
-            0].isalpha() else artist[0][0] for artist in c.fetchall()])))
+        list(set([get_chosung(artist[0][0]) if is_hangul(artist[0][0]) else artist[0][0].upper() if artist[0][0].isalpha()
+        else artist[0][0] for artist in c.fetchall()])))
     hangul_show_list = [InlineKeyboardButton(han, callback_data="han, "+han) for han in chosung_list]
     menu = build_menu(hangul_show_list, 3)
     hangul_show_markup = InlineKeyboardMarkup(menu)
     update.message.reply_text("알림 받고 싶은 가수의 초성 또는 시작 알파벳을 선택해주세요.\n"
-                              "신청 가능한 가수들이 궁금하시면 [/artist]를 터치해주세요.", reply_markup=hangul_show_markup)
+                              "신청 가능한 가수들이 궁금하시면 [/all_artists]를 터치해주세요.", reply_markup=hangul_show_markup)
 
 def kpop_artist_callback(bot, update):
     data = update.callback_query.data.split(', ')
@@ -258,7 +259,7 @@ def include_kpop_callback(bot, update):
         callback_data = callback_data[:-7]
         bot.edit_message_text(text = "선택이 종료되었습니다.\n{}이 선택되었습니다.\n새로운 곡이 올라오면 알림을 보내드릴게요.\n\n"
                                      "신청 목록에서 제외하고 싶은 가수가 있다면 [/exclude_artist]를 터치해주세요^^.\n"
-                                     "이전으로 돌아가시려면 [/new_download]를 터치해주세요.\n"
+                                     "이전으로 돌아가시려면 [/include_kpop_artist]를 터치해주세요.\n"
                                      "다른 서비스를 다시 신청하고 싶으시면 [/help]를 터치해주세요.".format(callback_data),
                               chat_id = update.callback_query.message.chat_id,
                               message_id = update.callback_query.message.message_id)
@@ -275,7 +276,7 @@ def include_pop_artist(bot, update):
     menu = build_menu(alphabet_show_list, 3)
     alphabet_show_markup = InlineKeyboardMarkup(menu)
     update.message.reply_text("알림 받고 싶은 가수의 시작 알파벳을 선택해주세요.\n"
-                              "신청 가능한 가수들이 궁금하시면 [/artist]를 터치해주세요.", reply_markup=alphabet_show_markup)
+                              "신청 가능한 가수들이 궁금하시면 [/all_artists]를 터치해주세요.", reply_markup=alphabet_show_markup)
 
 def pop_artist_callback(bot, update):
     data = update.callback_query.data.split(', ')
@@ -366,7 +367,7 @@ def include_pop_callback(bot, update):
         callback_data = callback_data[:-7]
         bot.edit_message_text(text="선택이 종료되었습니다.\n{}이 선택되었습니다.\n새로운 곡이 올라오면 알림을 보내드릴게요.\n\n"
                                    "신청 목록에서 제외하고 싶은 가수가 있다면 [/exclude_artist]를 터치해주세요^^.\n"
-                                   "이전으로 돌아가시려면 [/new_download]를 터치해주세요.\n"
+                                   "이전으로 돌아가시려면 [/include_pop_artist]를 터치해주세요.\n"
                                    "다른 서비스를 다시 신청하고 싶으시면 [/help]를 터치해주세요.".format(callback_data),
                               chat_id=update.callback_query.message.chat_id,
                               message_id=update.callback_query.message.message_id)
@@ -660,7 +661,7 @@ if __name__=='__main__':
     updater.dispatcher.add_handler(CommandHandler('start', start))
     updater.dispatcher.add_handler(CommandHandler('stop', stop))
     updater.dispatcher.add_handler(CommandHandler('help', help))
-    updater.dispatcher.add_handler(CommandHandler('artist', get_all_artists))
+    updater.dispatcher.add_handler(CommandHandler('all_artists', get_all_artists))
     updater.dispatcher.add_handler(CommandHandler('search', search))
     updater.dispatcher.add_handler(CommandHandler('chart', chart))
     updater.dispatcher.add_handler(CommandHandler('melon_chart', melon_chart))
