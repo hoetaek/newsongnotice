@@ -124,21 +124,39 @@ def get_all_artists(bot, update):
         list(set(
             [get_chosung(artist[0]) if is_hangul(artist[0]) else artist[0].upper() if artist[0].isalpha() else artist[0]
              for artist in kpop_artists])))
+
+    chosung_list1, chosung_list2 = chosung_list[:len(chosung_list)//2], chosung_list[len(chosung_list)//2:]
     update.message.reply_text(
         "\n".join(
             ["- " + ', '.join([artist for artist in kpop_artists if startswith(chosung, artist[0])]) for chosung in
-             chosung_list])
+             chosung_list1])
+    )
+    update.message.reply_text(
+        "\n".join(
+            ["- " + ', '.join([artist for artist in kpop_artists if startswith(chosung, artist[0])]) for chosung in
+             chosung_list2])
     )
     update.message.reply_text(
         "팝송 가수는  다음과 같이 있습니다.\n"
     )
     alphabet_list = sorted(list(set([artist[0].upper() if artist[0].isalpha() else artist[0] for artist in pop_artists])))
+    alphabet_list1, alphabet_list2, alphabet_list3 = alphabet_list[:len(alphabet_list)//3], alphabet_list[len(alphabet_list)//3:len(alphabet_list)//3*2], alphabet_list[len(alphabet_list)//3*2:]
     update.message.reply_text(
         "\n".join(
             ["- " + ', '.join([artist for artist in pop_artists if startswith(alphabet, artist[0])]) for alphabet in
-             alphabet_list])
+             alphabet_list1])
     )
-    bot.sendMessage(chat_id=str(update.callback_query.message.chat_id),
+    update.message.reply_text(
+        "\n".join(
+            ["- " + ', '.join([artist for artist in pop_artists if startswith(alphabet, artist[0])]) for alphabet in
+             alphabet_list2])
+    )
+    update.message.reply_text(
+        "\n".join(
+            ["- " + ', '.join([artist for artist in pop_artists if startswith(alphabet, artist[0])]) for alphabet in
+             alphabet_list3])
+    )
+    update.message.reply_text(
                     text="다른 서비스를 신청하고 싶으시면 [/help]를 터치해주세요.")
 
 def include_kpop_artist(bot, update):
