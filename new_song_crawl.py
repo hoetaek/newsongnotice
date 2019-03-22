@@ -46,10 +46,17 @@ def get_kpop_100():
         user_list = [user[0] for user in c.fetchall()]
         for chat_id in user_list:
             for song in new_songs:
+                c.execute("SELECT link FROM kpop_song WHERE song = ? AND artist = ?", (song[0], song[1]))
+                link = c.fetchone()
+                if link:
+                    link = "다운로드 링크 : " + link[0] + '\n'
+                else:
+                    link = ""
                 bot.sendMessage(chat_id=chat_id,  # 580916113
                                 text= "멜론 차트에 새로운 곡이 올라왔습니다\n" +
                                       song[1] + ' - ' + song[0] + '\n' +
-                                      get_youtube_url(song[1] + ' - ' + song[0]) +
+                                      "유튜브 링크 : " + get_youtube_url(song[1] + ' - ' + song[0]) + '\n' +
+                                      link +
                                       "\n알림을 그만 받고 싶다면 [/stop]을 터치해주세요.")
         c.close()
         conn.close()
@@ -63,7 +70,7 @@ def get_kpop_100():
         get_kpop_100()
         return
 
-def get_pop_200():
+def get_pop_100():
     latest_path = os.path.join(BASE_DIR, 'latest.json')
     response = requests.get("https://www.billboard.com/charts/hot-100")
     html = response.text
@@ -72,7 +79,7 @@ def get_pop_200():
     artist_soup = soup.select("div > div.chart-list-item__artist")
 
     billboard200 = [title.text.strip() + " - " + artist.text.strip() for title, artist in zip(title_soup, artist_soup)]
-    billboard200.insert(0, soup.select('div.chart-number-one__title')[0].text.strip() + ' - ' + soup.select('div.chart-number-one__artist')[0].text.strip())
+    # billboard200.insert(0, soup.select('div.chart-number-one__title')[0].text.strip() + ' - ' + soup.select('div.chart-number-one__artist')[0].text.strip())
     if os.path.exists(latest_path):
         with open(latest_path) as f:
             data = json.load(f)
@@ -95,10 +102,18 @@ def get_pop_200():
         user_list = [user[0] for user in c.fetchall()]
         for chat_id in user_list:
             for song in new_songs:
+                song_name, artist = song.split(' - ')
+                c.execute("SELECT link FROM pop_song WHERE song = ? COLLATE NOCASE AND artist = ? COLLATE NOCASE", (song_name, artist))
+                link = c.fetchone()
+                if link:
+                    link = "다운로드 링크 : " + link[0] + '\n'
+                else:
+                    link = ""
                 bot.sendMessage(chat_id= chat_id, #"580916113",
                                 text= "빌보드 차트에 새로운 곡이 올라왔습니다\n" +
                                       song + '\n' +
-                                      get_youtube_url(song) +
+                                      "유튜브 링크 : " + get_youtube_url(song) + '\n' +
+                                      link +
                                       "\n알림을 그만 받고 싶다면 [/stop]을 터치해주세요.")
 
         c.close()
@@ -110,7 +125,7 @@ def get_pop_200():
     else:
         with open(latest_path, 'w') as f:
             json.dump({'pop': []}, f)
-        get_pop_200()
+        get_pop_100()
         return
 
 class SongDownloadLink():
@@ -255,11 +270,11 @@ if __name__=='__main__':
     Chrome.crawl_pop_song_list()
     for i in range(2):
         print(i)
-        get_pop_200()
+        get_pop_100()
         get_kpop_100()
         time.sleep(30)
     schedule.every(300).minutes.do(get_kpop_100)
-    schedule.every(3).minutes.do(get_pop_200)
+    schedule.every(3).minutes.do(get_pop_100)
     schedule.every(30).minutes.do(Chrome.crawl_kpop_song_list)
     schedule.every(30).minutes.do(Chrome.crawl_pop_song_list)
 
