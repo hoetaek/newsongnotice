@@ -1,5 +1,6 @@
 import requests
 from selenium import webdriver
+from selenium.webdriver.common.by import By
 from bs4 import BeautifulSoup
 import re
 import schedule, time
@@ -140,8 +141,9 @@ class SongDownloadLink():
         print("kpop page num : ", current_page)
         url = "https://lover.ne.kr:124/bbs/zboard.php?id=sitelink1&page={}&select_arrange=headnum&desc=asc&category=1" \
               "&sn=off&ss=on&sc=on&keyword=&sn1=&divpage=1".format(current_page)
-        type = 'kpop'
+        song_type = 'kpop'
         driver = self.start_driver()
+        driver.find_element_by_css_selector()
         driver.get(url)
         html_source = driver.page_source
         soup = BeautifulSoup(html_source, 'html.parser')
@@ -155,11 +157,11 @@ class SongDownloadLink():
             artist = info[0].strip()
             song = info[1].strip()
             link = "https://lover.ne.kr:124/bbs/" + i.select('a')[0]['href'].rstrip()
-            song_info.append((type,[song.replace("'", "''"), artist.replace("'", "''"), link]))
+            song_info.append((song_type,[song.replace("'", "''"), artist.replace("'", "''"), link]))
         driver.quit()
         conn = sqlite3.connect('user_info.db')
         c = conn.cursor()
-        new_song_info = [song for song in song_info if not is_song(c, type, song[1])]
+        new_song_info = [song for song in song_info if not is_song(c, song_type, song[1])]
         c.close()
         conn.close()
         for i in new_song_info[:]:
@@ -172,7 +174,7 @@ class SongDownloadLink():
         print("pop page num : ", current_page)
         url = "https://lover.ne.kr:124/bbs/zboard.php?category=4&id=sitelink1&page={}&page_num=24&sn=off&ss=on&sc=on" \
               "&keyword=&select_arrange=headnum&desc=asc".format(current_page)
-        type = 'pop'
+        song_type = 'pop'
         driver = self.start_driver()
         driver.get(url)
         html_source = driver.page_source
@@ -184,11 +186,11 @@ class SongDownloadLink():
             artist = info[0].strip()
             song = info[1].strip()
             link = "https://lover.ne.kr:124/bbs/" + i.select('a')[0]['href'].rstrip()
-            song_info.append((type, [song.replace("'", "''"), artist.replace("'", "''"), link]))
+            song_info.append((song_type, [song.replace("'", "''"), artist.replace("'", "''"), link]))
         driver.quit()
         conn = sqlite3.connect('user_info.db')
         c = conn.cursor()
-        new_song_info = [song for song in song_info if not is_song(c, type, song[1])]
+        new_song_info = [song for song in song_info if not is_song(c, song_type, song[1])]
         c.close()
         conn.close()
         for i in new_song_info[:]:
@@ -197,8 +199,35 @@ class SongDownloadLink():
         if new_song_info and current_page < end_page:
             self.crawl_pop_song_list(current_page=current_page + 1)
 
+    def crawl_keyword_list(self, keyword, chat_id):
+        driver = self.start_driver()
+        driver.get("https://lover.ne.kr:124/bbs/zboard.php?&id=sitelink1")
+        driver.find_element(By.XPATH, "//input[@type='text']").send_keys(keyword)
+        driver.find_element(By.XPATH, "//input[@type='image']").click()
+        html_source = driver.page_source
+        soup = BeautifulSoup(html_source, 'html.parser')
+        song_info = []
+        soup_songs = soup.select("td[align='left']")
+        for i in soup_songs:
+            info = i.text.split(' - ')
+            artist = info[0].strip()
+            song = info[1].strip()
+            link = "https://lover.ne.kr:124/bbs/" + i.select('a')[0]['href'].rstrip()
+            song_info.append((chat_id, [song.replace("'", "''"), artist.replace("'", "''"), link]))
+        driver.quit()
+        conn = sqlite3.connect('user_info.db')
+        c = conn.cursor()
+        c.close()
+        conn.close()
+        if not song_info:
+            bot.sendMessage(chat_id=chat_id,  # "580916113",
+                            text="검색 결과가 존재하지 않습니다.")
+        else:
+            for i in song_info:
+                self.get_download_link(i)
+
     def get_download_link(self, song_info):
-        type, song = song_info[0], song_info[1]
+        song_type, song = song_info[0], song_info[1]
         song_name = song[0]
         song_artist = song[1]
         print(song[0], song[1])
@@ -234,11 +263,16 @@ class SongDownloadLink():
         else:
             driver.quit()
             song[2] = iframe_link
-
+        if song_type.isdigit():
+            bot.sendMessage(chat_id=song_type,  # "580916113",
+                            text="곡: " + song_artist + " - " + song_name +
+                                 '\n유튜브 링크 : ' + get_youtube_url(song_artist + " - " + song_name) +
+                                 '\n다운로드 링크 : ' + song[2])
+            return
         conn = sqlite3.connect('user_info.db')
         c = conn.cursor()
-        insert_song(c, type, song)
-        for chat_id in get_user_list(c, type, song_artist):
+        insert_song(c, song_type, song)
+        for chat_id in get_user_list(c, song_type, song_artist):
             bot.sendMessage(chat_id= chat_id, #"580916113",
                             text= "곡: " + song_artist + " - " + song_name +
                                   '\n유튜브 링크 : ' + get_youtube_url(song_artist + " - " + song_name) +

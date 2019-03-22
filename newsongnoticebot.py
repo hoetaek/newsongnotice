@@ -1,10 +1,20 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Bot
-from telegram.ext import Updater, CommandHandler, CallbackQueryHandler
+from telegram.ext import Updater, MessageHandler, CommandHandler, CallbackQueryHandler, Filters
 from tempfile import NamedTemporaryFile
 import sqlite3
 from make_db import insert_user, is_user, get_song_list, get_artist_list
-from new_song_crawl import get_youtube_url
+from new_song_crawl import SongDownloadLink, get_youtube_url
 import os, re
+
+def get_message(bot, update):
+    chat_id = str(update.message['chat']['id'])
+    update.message.reply_text("got text")
+    text = update.message.text
+    if text.startswith("검색"):
+        keyword = text[2:].strip()
+        if keyword:
+            chrome = SongDownloadLink()
+            chrome.crawl_keyword_list(keyword, chat_id)
 
 def build_menu(buttons, n_cols, header_buttons=None, footer_buttons=None):
     menu = [buttons[i:i + n_cols] for i in range(0, len(buttons), n_cols)]
@@ -693,8 +703,6 @@ def startswith(pattern, word):
         word = get_chosung(word)
     return re.match(pattern, word, re.I)
 
-
-
 if __name__=='__main__':
     token = '751248768:AAEJB5JcAh52nWfrSyKTEISGX8_teJIxNFw'
     # token = "790146878:AAFKnWCnBV9WMSMYPnfcRXukmftgDyV_BlY" #this is a test bot
@@ -702,6 +710,8 @@ if __name__=='__main__':
     bot = Bot(token=token)
 
     updater = Updater(token)
+
+    updater.dispatcher.add_handler(MessageHandler(Filters.text, get_message))
     updater.dispatcher.add_handler(CommandHandler('start', start))
     updater.dispatcher.add_handler(CommandHandler('stop', stop))
     updater.dispatcher.add_handler(CommandHandler('help', help))
