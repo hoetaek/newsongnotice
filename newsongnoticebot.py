@@ -21,6 +21,7 @@ def start(bot, update):
         '차트에 새로 올라오는 노래 알림을 받고 싶다면 [/chart]를 터치해주세요.\n'
         '새로운 곡 다운로드 링크 알림을 받고 싶으시면 [/new_download]를 터치해주세요\n'
         '노래를 찾고 싶으시면 [/search]를 터치해주세요\n'
+        '신청하신 서비를 확인하고 싶으시면 [/check_service]를 터치해주세요\n'
         '도움이 필요하시면 [/help]를 터치해주세요.')
 
 def stop(bot, update):
@@ -46,13 +47,54 @@ def help(bot, update):
     update.message.reply_text(
         '차트에 새로 올라오는 노래 알림을 받고 싶다면 [/chart]를 터치해주세요.\n'
         '새로운 곡 다운로드 링크 알림을 받고 싶으시면 [/new_download]를 터치해주세요\n'
-        '노래를 찾고 싶으시면 [/search]를 터치해주세요.\n\n'
+        '노래를 찾고 싶으시면 [/search]를 터치해주세요.\n'
+        '신청하신 서비를 확인하고 싶으시면 [/check_service]를 터치해주세요\n\n'
         '신청 가능한 가수들이 궁금하시면 [/all_artists]를 터치해주세요.')
+
+def check_service(bot, update):
+    chat_id = str(update.message['chat']['id'])
+    conn = sqlite3.connect('user_info.db')
+    c = conn.cursor()
+    user_id = is_user(c, chat_id)
+    if not user_id:
+        c.execute("INSERT INTO users VALUES(NULL, '{}')".format(chat_id))
+        user_id = c.lastrowid
+    c.execute("SELECT charts_id FROM users_charts WHERE user_id = {}".format(user_id))
+    service_chart = []
+    for i in c.fetchall():
+        chart_id = i[0]
+        c.execute("SELECT chart FROM charts WHERE id = {}".format(chart_id))
+        service_chart.append(c.fetchone()[0])
+    if service_chart:
+        chart_text = '신청하신 차트는 ' + ', '.join(service_chart) + "입니다." + '\n'
+    else:
+        chart_text = "신청하신 차트가 없습니다.\n"
+
+    kpop_artist = get_artist_list(c, 'kpop', chat_id)
+    pop_artist = get_artist_list(c, 'pop', chat_id)
+    c.close()
+    conn.close()
+    artist_text = ""
+    if kpop_artist:
+        artist_text = "kpop : \n{} 아티스트를 선택했습니다.\n".format(', '.join(kpop_artist))
+    if pop_artist:
+        artist_text = artist_text + "pop : \n{} 아티스트를 선택했습니다.\n".format(', '.join(pop_artist))
+    if not kpop_artist and not pop_artist:
+        artist_text = "선택하신 아티스트가 없습니다.\n"
+
+    update.message.reply_text(
+        chart_text +
+        artist_text
+    )
+    update.message.reply_text(
+        "다른 서비스를 다시 신청하고 싶으시면 [/help]를 터치해주세요."
+    )
 
 def chart(bot, update):
     update.message.reply_text(
         '멜론 차트에 새로 올라오는 노래 알림을 받고 싶다면 [/melon_chart]를 터치해주세요.\n'
-        '빌보드 차트에 새로 올라오는 노래 알림을 받고 싶다면 [/billboard_chart]를 터치해주세요.\n')
+        '빌보드 차트에 새로 올라오는 노래 알림을 받고 싶다면 [/billboard_chart]를 터치해주세요.\n'
+        "다른 서비스를 다시 신청하고 싶으시면 [/help]를 터치해주세요.")
 
 def melon_chart(bot, update):
     chat_id = str(update.message['chat']['id'])
@@ -664,6 +706,7 @@ if __name__=='__main__':
     updater.dispatcher.add_handler(CommandHandler('all_artists', get_all_artists))
     updater.dispatcher.add_handler(CommandHandler('search', search))
     updater.dispatcher.add_handler(CommandHandler('chart', chart))
+    updater.dispatcher.add_handler(CommandHandler('check_service', check_service))
     updater.dispatcher.add_handler(CommandHandler('melon_chart', melon_chart))
     updater.dispatcher.add_handler(CommandHandler('billboard_chart', billboard_chart))
     updater.dispatcher.add_handler(CommandHandler('new_download', new_download))
