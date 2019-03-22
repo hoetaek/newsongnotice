@@ -66,7 +66,8 @@ def melon_chart(bot, update):
     if c.fetchone():
         c.execute("DELETE FROM users_charts WHERE user_id = ? and charts_id = ?", (user_id, chart_id))
         update.message.reply_text("멜론 차트에 알림을 취소하셨습니다.\n"
-                                  "다시 신청하고 싶으시면 [/melon_chart]를 터치해주세요.")
+                                  "다시 신청하고 싶으시면 [/melon_chart]를 터치해주세요.\n"
+                                  "다른 서비스를 다시 신청하고 싶으시면 [/help]를 터치해주세요.")
     else:
         c.execute("INSERT INTO users_charts VALUES(?, ?)", (user_id, chart_id))
         update.message.reply_text("앞으로 멜론 차트에 새로운 노래가 올라오면 보내도록 하겠습니다.\n"

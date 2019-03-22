@@ -16,39 +16,10 @@ def get_kpop_100():
     selectors = [['#lst50 > td:nth-child(6) > div > div > div.ellipsis.rank01 > span > a', '#lst50 > td:nth-child(6) > div > div > div.ellipsis.rank02 > span'],
                  ['#lst100 > td:nth-child(6) > div > div > div.ellipsis.rank01 > span > a', '#lst100 > td:nth-child(6) > div > div > div.ellipsis.rank02 > span']]
     for title_sel, artist_sel in selectors:
-        options = webdriver.ChromeOptions()
-        options.add_argument('headless')
-        options.add_argument('window-size=1920x1080')
-        options.add_argument("disable-gpu")
-        driver = webdriver.Chrome('chromedriver', chrome_options=options)
-        driver.get("https://www.melon.com/chart/index.htm")
-        html = driver.page_source
-        print(html)
-        driver.quit()
-
-        cookies = {
-            'SCOUTER': 'x3mttqnd87j5f9',
-            'PCID': '15519307755048607540802',
-            'PC_PCID': '15519307755048607540802',
-            'POC': 'MP10',
-            'charttutorial': 'true',
-        }
-
         headers = {
-            'Connection': 'keep-alive',
-            'Cache-Control': 'max-age=0',
-            'Save-Data': 'on',
-            'Upgrade-Insecure-Requests': '1',
-            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.121 Safari/537.36',
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
-            'Referer': 'https://member.melon.com/muid/web/login/login_informExpire.htm',
-            'Accept-Encoding': 'gzip, deflate, br',
-            'Accept-Language': 'ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7',
-        }
-
-        response = requests.get('https://www.melon.com/chart/index.htm', headers=headers, cookies=cookies)
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36', }
+        response = requests.get('https://www.melon.com/chart/index.htm', headers=headers)
         html = response.text
-
         soup = BeautifulSoup(html, 'html.parser')
         kpop_chart_100.extend([[title.text, artist.text] for title, artist in zip(soup.select(title_sel), soup.select(artist_sel))])
     if os.path.exists(latest_path):
@@ -60,8 +31,6 @@ def get_kpop_100():
                 before = before[90:]
         else:
             before = []
-        print(len(kpop_chart_100))
-        print(kpop_chart_100)
         new_songs = [i for i in kpop_chart_100 if i not in before]
         with open(latest_path, 'w') as f:
             before.extend(new_songs)
@@ -138,7 +107,7 @@ def get_pop_200():
     else:
         with open(latest_path, 'w') as f:
             json.dump({'pop': []}, f)
-        get_kpop_100()
+        get_pop_200()
         return
 
 class SongDownloadLink():
@@ -279,12 +248,13 @@ bot = Bot(token=token)
 
 if __name__=='__main__':
     Chrome = SongDownloadLink()
-    # Chrome.crawl_kpop_song_list()
-    # Chrome.crawl_pop_song_list()
+    Chrome.crawl_kpop_song_list()
+    Chrome.crawl_pop_song_list()
     for i in range(2):
         print(i)
-        get_kpop_100()
         get_pop_200()
+        get_kpop_100()
+        time.sleep(30)
     schedule.every(300).minutes.do(get_kpop_100)
     schedule.every(3).minutes.do(get_pop_200)
     schedule.every(30).minutes.do(Chrome.crawl_kpop_song_list)
