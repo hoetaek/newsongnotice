@@ -302,6 +302,7 @@ def include_kpop_callback(bot, update):
         bot.edit_message_text(text = "선택이 종료되었습니다.\n{}이 선택되었습니다.\n새로운 곡이 올라오면 알림을 보내드릴게요.\n\n"
                                      "신청 목록에서 제외하고 싶은 가수가 있다면 [/exclude_artist]를 터치해주세요^^.\n"
                                      "이전으로 돌아가시려면 [/include_kpop_artist]를 터치해주세요.\n"
+                                     "신청 가능한 가수들이 궁금하시면 [/all_artists]를 터치해주세요.\n"
                                      "다른 서비스를 다시 신청하고 싶으시면 [/help]를 터치해주세요.".format(callback_data),
                               chat_id = update.callback_query.message.chat_id,
                               message_id = update.callback_query.message.message_id)
@@ -410,6 +411,7 @@ def include_pop_callback(bot, update):
         bot.edit_message_text(text="선택이 종료되었습니다.\n{}이 선택되었습니다.\n새로운 곡이 올라오면 알림을 보내드릴게요.\n\n"
                                    "신청 목록에서 제외하고 싶은 가수가 있다면 [/exclude_artist]를 터치해주세요^^.\n"
                                    "이전으로 돌아가시려면 [/include_pop_artist]를 터치해주세요.\n"
+                                   "신청 가능한 가수들이 궁금하시면 [/all_artists]를 터치해주세요.\n"
                                    "다른 서비스를 다시 신청하고 싶으시면 [/help]를 터치해주세요.".format(callback_data),
                               chat_id=update.callback_query.message.chat_id,
                               message_id=update.callback_query.message.message_id)
