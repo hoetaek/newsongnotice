@@ -4,15 +4,17 @@ from tempfile import NamedTemporaryFile
 import sqlite3
 from make_db import insert_user, is_user, get_song_list, get_artist_list
 from new_song_crawl import SongDownloadLink, get_youtube_url
+from telegram.ext.dispatcher import run_async
 import os, re
 
+@run_async
 def get_message(bot, update):
     chat_id = str(update.message['chat']['id'])
     text = update.message.text
     if text.startswith("검색"):
         keyword = text[2:].strip()
         if keyword:
-            update.message.reply_text(keyword + "을 검색 중입니다.")
+            update.message.reply_text(keyword + "을(를) 검색 중입니다.")
             chrome = SongDownloadLink()
             chrome.crawl_keyword_list(keyword, chat_id)
 

@@ -9,6 +9,7 @@ import json
 import os
 import urllib.parse
 from telegram import Bot
+from multiprocessing import Pool
 from make_db import get_user_list, insert_song, is_song
 
 def get_kpop_100():
@@ -132,7 +133,7 @@ def get_pop_100():
 class SongDownloadLink():
     def start_driver(self):
         options = webdriver.ChromeOptions()
-        options.add_argument('headless')
+        # options.add_argument('headless')
         options.add_argument('window-size=1920x1080')
         options.add_argument("disable-gpu")
         return webdriver.Chrome('chromedriver', chrome_options=options)
@@ -219,11 +220,14 @@ class SongDownloadLink():
         c.close()
         conn.close()
         if not song_info:
+
             bot.sendMessage(chat_id=chat_id,  # "580916113",
                             text="검색 결과가 존재하지 않습니다.")
         else:
-            for i in song_info:
-                self.get_download_link(i)
+            # for i in song_info:
+            #     self.get_download_link(i)
+            pool = Pool(processes=2)
+            pool.map(self.get_download_link, song_info)
 
     def get_download_link(self, song_info):
         song_type, song = song_info[0], song_info[1]
