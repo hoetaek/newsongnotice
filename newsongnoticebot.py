@@ -8,11 +8,11 @@ import os, re
 
 def get_message(bot, update):
     chat_id = str(update.message['chat']['id'])
-    update.message.reply_text("got text")
     text = update.message.text
     if text.startswith("검색"):
         keyword = text[2:].strip()
         if keyword:
+            update.message.reply_text(keyword + "검색 중입니다.")
             chrome = SongDownloadLink()
             chrome.crawl_keyword_list(keyword, chat_id)
 
