@@ -133,7 +133,7 @@ def get_pop_100():
 class SongDownloadLink():
     def start_driver(self):
         options = webdriver.ChromeOptions()
-        # options.add_argument('headless')
+        options.add_argument('headless')
         options.add_argument('window-size=1920x1080')
         options.add_argument("disable-gpu")
         return webdriver.Chrome('chromedriver', chrome_options=options)
