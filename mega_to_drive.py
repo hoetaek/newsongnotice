@@ -20,7 +20,7 @@ c = conn.cursor()
 for song_type in ["kpop", "pop"]:
     c.execute("SELECT id, link FROM {}_song".format(song_type))
     links = [[link, song_type] for link in c.fetchall()]
-    pool = Pool(processes=3)
+    pool = Pool(processes=4)
     pool.map(start_working, links)
 
 conn.commit()
