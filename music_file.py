@@ -21,7 +21,7 @@ else:
 gauth.SaveCredentialsFile("mycreds.txt")
 
 def download_mega_link(link):
-    file_name = os.popen('megadl --print-names --no-progress {}'.format(link)).read()
+    file_name = os.popen('megadl --print-names --no-progress {}'.format(link)).read().replace('\n', '')
     return  file_name
 
 def upload_get_link(file_path):

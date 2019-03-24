@@ -17,7 +17,7 @@ for song_type in ["kpop", "pop"]:
         open_link = upload_get_link(file_path)
         print(open_link)
         # os.unlink(file_path)
-        c.execute("UPDATE {}_song SET link = ? WHERE id = ?".format(song_type), (open_link, link[0]))
+        # c.execute("UPDATE {}_song SET link = ? WHERE id = ?".format(song_type), (open_link, link[0]))
         conn.commit()
         c.close()
         conn.close()
