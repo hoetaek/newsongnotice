@@ -5,6 +5,8 @@ from multiprocessing import Pool
 
 
 def start_working(data):
+    conn = sqlite3.connect("user_info.db")
+    c = conn.cursor()
     link_data = data[0]
     song_type = data[1]
     link_id = link_data[0]
@@ -14,15 +16,17 @@ def start_working(data):
         open_link = upload_get_link(file_path)
         os.unlink(file_path)
         c.execute("UPDATE {}_song SET link = ? WHERE id = ?".format(song_type), (open_link, link_id))
+    conn.commit()
+    c.close()
+    conn.close()
 
-conn = sqlite3.connect("user_info.db")
-c = conn.cursor()
+
 for song_type in ["kpop", "pop"]:
+    conn = sqlite3.connect("user_info.db")
+    c = conn.cursor()
     c.execute("SELECT id, link FROM {}_song".format(song_type))
+    c.close()
+    conn.close()
     links = [[link, song_type] for link in c.fetchall()]
     pool = Pool(processes=4)
     pool.map(start_working, links)
-
-conn.commit()
-c.close()
-conn.close()
