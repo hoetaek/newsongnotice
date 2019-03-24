@@ -5,18 +5,85 @@ import sqlite3
 from make_db import insert_user, is_user, get_song_list, get_artist_list
 from new_song_crawl import SongDownloadLink, get_youtube_url
 from telegram.ext.dispatcher import run_async
-import os, re
+import os, re, difflib
 
 @run_async
 def get_message(bot, update):
     chat_id = str(update.message['chat']['id'])
     text = update.message.text
+    conn = sqlite3.connect("user_info.db")
+    c = conn.cursor()
     if text.startswith("검색"):
         keyword = text[2:].strip()
         if keyword:
             update.message.reply_text(keyword + "을(를) 검색 중입니다.")
             chrome = SongDownloadLink()
             chrome.crawl_keyword_list(keyword, chat_id)
+    elif text.startswith("가수"):
+        keyword = text[2:].strip()
+        if keyword:
+            update.message.reply_text(keyword + " 가수를 검색 중입니다.")
+            songs = []
+            for song_type in ['kpop', 'pop']:
+                c.execute("SELECT artist FROM {}_artist".format(song_type))
+                songs.extend(sorted([artist[0] for artist in c.fetchall()]))
+            songs = [artist for artist in songs if show_dif(artist.lower(), keyword.lower()) < 0.1 or (len(keyword.lower()) > 1 and keyword.lower() in artist.lower())]
+            for artist in songs:
+                for song_type in ['kpop', 'pop']:
+                    song_infos = get_song_list(c, song_type, artist)
+                    if len(song_infos) > 1:
+                        print("more than one song")
+                        show_list = [InlineKeyboardButton(song_info[2] + ' - ' + song_info[1],
+                                                          callback_data="send, " + song_type + ", " + str(song_info[0]))
+                                     for song_info in song_infos] \
+                                    + [InlineKeyboardButton('get all',
+                                                            callback_data="send, " + song_type + ", " + "get all, " + str(
+                                                                song_infos[0][0]))]
+                        menu = build_menu(show_list, 1)
+                        show_markup = InlineKeyboardMarkup(menu)
+                        bot.sendMessage(text="{}이(가) 선택되었습니다.".format(artist),
+                                              chat_id=chat_id,
+                                              reply_markup=show_markup)
+                    elif len(song_infos) == 1:
+                        print("one song")
+                        song_info = song_infos[0]
+                        song = song_info[1]
+                        artist = song_info[2]
+                        link = song_info[3]
+                        bot.sendMessage(text="{}이(가) 선택되었습니다.".format(artist + ' - ' + song),
+                                              chat_id=chat_id)
+                        bot.sendMessage(chat_id=chat_id,
+                                        text="곡 : " + artist + ' - ' + song + \
+                                             '\n유튜브 링크 : ' + get_youtube_url(artist + ' - ' + song) + \
+                                             '\n다운로드 링크 : ' + link + "\n\n")
+            bot.sendMessage(chat_id=chat_id,
+                            text="다른 서비스를 신청하고 싶으시면 [/help]를 터치해주세요.")
+
+    elif text.startswith("노래"):
+        keyword = text[2:].strip()
+        if keyword:
+            update.message.reply_text(keyword + " 노래를 검색 중입니다.")
+            songs = []
+            for song_type in ['kpop', 'pop']:
+                c.execute("SELECT song, artist, link FROM {}_song".format(song_type))
+                songs.extend(sorted([song for song in c.fetchall()], key=lambda element:element[0]))
+            song_infos = [song for song in songs if show_dif(song[0].lower(), keyword.lower()) < 0.12 or (
+                        len(keyword.lower()) > 1 and keyword.lower() in song[0].lower())]
+            for song_info in song_infos:
+                song = song_info[0]
+                artist = song_info[1]
+                link = song_info[2]
+                bot.sendMessage(text="{}이(가) 선택되었습니다.".format(artist + ' - ' + song),
+                                chat_id=chat_id)
+                bot.sendMessage(chat_id=chat_id,
+                                text="곡 : " + artist + ' - ' + song + \
+                                     '\n유튜브 링크 : ' + get_youtube_url(artist + ' - ' + song) + \
+                                     '\n다운로드 링크 : ' + link + "\n\n")
+
+def show_dif(a, b):
+    result = difflib.ndiff(a, b)
+    result = ''.join(result)
+    return (result.count('+') + result.count('-')) / (len(result)+1)
 
 def build_menu(buttons, n_cols, header_buttons=None, footer_buttons=None):
     menu = [buttons[i:i + n_cols] for i in range(0, len(buttons), n_cols)]
