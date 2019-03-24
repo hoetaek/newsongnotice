@@ -25,8 +25,8 @@ for song_type in ["kpop", "pop"]:
     conn = sqlite3.connect("user_info.db")
     c = conn.cursor()
     c.execute("SELECT id, link FROM {}_song".format(song_type))
+    links = [[link, song_type] for link in c.fetchall()]
     c.close()
     conn.close()
-    links = [[link, song_type] for link in c.fetchall()]
     pool = Pool(processes=4)
     pool.map(start_working, links)
