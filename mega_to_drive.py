@@ -1,25 +1,28 @@
 from music_file import upload_get_link, download_mega_link
 import sqlite3
 import os
+from multiprocessing import Pool
+
+
+def start_working(data):
+    link_data = data[0]
+    song_type = data[1]
+    link_id = link_data[0]
+    link = link_data[1]
+    if link.startswith("https://mega."):
+        file_path = download_mega_link(link)
+        open_link = upload_get_link(file_path)
+        os.unlink(file_path)
+        c.execute("UPDATE {}_song SET link = ? WHERE id = ?".format(song_type), (open_link, link_id))
 
 conn = sqlite3.connect("user_info.db")
 c = conn.cursor()
 for song_type in ["kpop", "pop"]:
     c.execute("SELECT id, link FROM {}_song".format(song_type))
-    links = [link for link in c.fetchall()]
+    links = [[link, song_type] for link in c.fetchall()]
+    pool = Pool(processes=3)
+    pool.map(start_working, links)
 
-    for link_data in links:
-        print(link_data)
-        link_id = link_data[0]
-        link = link_data[1]
-        file_path = download_mega_link(link)
-        print(file_path)
-        open_link = upload_get_link(file_path)
-        print(open_link)
-        os.unlink(file_path)
-        c.execute("UPDATE {}_song SET link = ? WHERE id = ?".format(song_type), (open_link, link[0]))
-        conn.commit()
-        c.close()
-        conn.close()
-        break
-    break
+conn.commit()
+c.close()
+conn.close()
