@@ -21,15 +21,9 @@ else:
 gauth.SaveCredentialsFile("mycreds.txt")
 
 def download_mega_link(link):
-    file_name = check_output(['megadl', '--print-names', '--no-progress',
-                              'https://mega.nz/#!CiY0jK7S!kWBHOp1GhRkb5L-rLCO5DHOb5MT8tmNji0pnxtQYKdY'.encode('utf-8')]).decode('utf-8')
-    print(file_name)
-    # file_name = subprocess.run(['megadl', '--print-names', '--no-progress', link.encode('utf-8')],
-    #                            stdout=subprocess.PIPE, encoding='US-ASCII').stdout
-    return file_name
+    file_name = os.popen('megadl --print-names --no-progress {}'.format(link)).read()
+    return  file_name
 
-out = os.popen('megadl https://mega.nz/#!CiY0jK7S!kWBHOp1GhRkb5L-rLCO5DHOb5MT8tmNji0pnxtQYKdY').read()
-print(out)
 def upload_get_link(file_path):
     drive = GoogleDrive(gauth)
     upload_file = drive.CreateFile()

@@ -9,18 +9,17 @@ for song_type in ["kpop", "pop"]:
     links = [link for link in c.fetchall()]
 
     for link_data in links:
-
         print(link_data)
-
         link_id = link_data[0]
         link = link_data[1]
         file_path = download_mega_link(link)
         print(file_path)
-        # open_link = upload_get_link(file_path)
-        # print(open_link)
+        open_link = upload_get_link(file_path)
+        print(open_link)
         # os.unlink(file_path)
-        # c.execute("UPDATE {}_song SET link = ? WHERE id = ?".format(song_type), (open_link, link[0]))
-        # conn.commit()
-
+        c.execute("UPDATE {}_song SET link = ? WHERE id = ?".format(song_type), (open_link, link[0]))
+        conn.commit()
+        c.close()
+        conn.close()
         break
     break
