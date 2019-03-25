@@ -2,6 +2,7 @@ from music_file import upload_get_link, download_mega_link
 import sqlite3
 import os
 from multiprocessing import Pool
+from time import sleep
 
 
 def start_working(data):
@@ -16,6 +17,7 @@ def start_working(data):
         open_link = upload_get_link(file_path)
         os.unlink(file_path)
         c.execute("UPDATE {}_song SET link = ? WHERE id = ?".format(song_type), (open_link, link_id))
+    sleep(2)
     conn.commit()
     c.close()
     conn.close()
