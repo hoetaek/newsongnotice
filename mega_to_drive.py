@@ -1,5 +1,7 @@
 from music_file import upload_get_link, download_mega_link
 import sqlite3
+import time
+from multiprocessing import Pool
 import os
 
 
@@ -18,6 +20,7 @@ def start_working(data):
     conn.commit()
     c.close()
     conn.close()
+    time.sleep(2)
 
 
 for song_type in ["kpop", "pop"]:
@@ -27,5 +30,7 @@ for song_type in ["kpop", "pop"]:
     links = [[link, song_type] for link in c.fetchall()]
     c.close()
     conn.close()
-    for link in links:
-        start_working(link)
+    pool = Pool(processes=3)
+    pool.map(start_working, links)
+    # for link in links:
+    #     start_working(link)

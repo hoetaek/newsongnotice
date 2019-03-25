@@ -1,7 +1,6 @@
 from pydrive.auth import GoogleAuth
 from pydrive.drive import GoogleDrive
-from subprocess import check_output
-import subprocess
+from pytube import YouTube
 import os
 
 
@@ -23,6 +22,12 @@ gauth.SaveCredentialsFile("mycreds.txt")
 def download_mega_link(link):
     file_name = os.popen('megadl --print-names --no-progress {}'.format(link)).read().replace('\n', '')
     return  file_name
+
+def download_youtube_link(link):
+    # yt = YouTube(link)
+    yt = YouTube("https://www.youtube.com/watch?v=YQHsXMglC9A")
+    yt.streams.filter(only_audio=True).all().download('/audio')
+# download_youtube_link("link")
 
 def upload_get_link(file_path):
     drive = GoogleDrive(gauth)
