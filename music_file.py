@@ -36,7 +36,7 @@ def download_youtube_link(song, artist, itunes = True):
     command = ['ffmpeg', '-i', file_name.encode('utf-8'), '-i', cover.encode('utf-8'), '-acodec', 'libmp3lame', '-b:a', '256k', '-c:v', 'copy',
                      '-map', '0:a:0', '-map', '1:v:0', (music).encode('utf-8')]
     command[11:11] = metadata
-    subprocess.call(command)#, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    subprocess.call(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     os.unlink(file_name)
     os.unlink(cover)
     return os.path.basename(music)
