@@ -4,8 +4,6 @@ from pytube import YouTube
 import urllib.parse, requests
 from bs4 import BeautifulSoup
 import itunespy
-from musixmatch import Musixmatch
-from selenium import webdriver
 import wget
 import subprocess
 import os, re
@@ -29,6 +27,7 @@ def download_youtube_link(song, artist, itunes = True):
     else:
         title = artist + ' - ' + song
         cover = wget.download(yt.thumbnail_url)
+        print(yt.thumbnail_url)
         metadata = []
     if itunes == False:
         title = artist + ' - ' + song
@@ -50,15 +49,17 @@ def get_track_data(song, artist):
                 "TYER":track.release_date, "Track":track.track_number, "disc":track.disc_number}
     lyrics = get_lyrics(metadata['title'], metadata['artist'])
     if lyrics:
-        metadata.update({'lyrics':lyrics})
+        metadata.update({'USLT':lyrics})
+    print(metadata)
     cover = track.artwork_url_100.replace('100', '500')
     file = wget.download(cover, out=artist + ' - ' + song + '.jpg')
     return metadata['artist'] + ' - ' + metadata['title'], file, metadata
 
 def get_lyrics(song, artist):
-    musixmatch = Musixmatch('1727b5ea994b4420ee5b6d27a0fd8bf5')
+    url = "http://api.musixmatch.com/ws/1.1/track.search?format=json&q_artist={}&q_track={}&page_size=3&page=1&s_track_rating=desc&apikey=1727b5ea994b4420ee5b6d27a0fd8bf5".format(artist, song)
+    response = requests.get(url).json()
     try:
-        lyrics_url = musixmatch.track_search(q_artist=artist, q_track=song, page_size=10, page=1, s_track_rating='desc')['message']['body']['track_list'][0]['track']['track_share_url']
+        lyrics_url = response['message']['body']['track_list'][0]['track']['track_share_url']
     except IndexError:
         return None
     pattern = r'\?.*'
@@ -107,28 +108,22 @@ def get_youtube_url(keyword):
             return 'https://www.youtube.com' + link.get('href')
     return "no youtube link"
 
-def start_driver():
-    options = webdriver.ChromeOptions()
-    # options.add_argument('headless')
-    options.add_argument('window-size=1920x1080')
-    options.add_argument("disable-gpu")
-    return webdriver.Chrome('chromedriver', chrome_options=options)
-
 if __name__=='__main__':
-    # download_youtube_link("Always Remember Us This Way", "Lady GaGa")
-    # download_youtube_link("그댈 마주하는건 힘들어", "버스커 버스커")
+    # get_lyrics("Always Remember Us This Way", "Lady GaGa")
+    download_youtube_link("그댈 마주하는건 힘들어", "버스커 버스커", itunes=False)
     # download_youtube_link("대박이다", "버스커 버스커")
-    import sqlite3
-    conn = sqlite3.connect("user_info.db")
-    c = conn.cursor()
-    c.execute("SELECT song, artist FROM kpop_song")
-    song_infos = [i for i in c.fetchall()][228:235]
-    for song_info in song_infos:
-        song = song_info[0]
-        artist = song_info[1]
-        download_youtube_link(song, artist)
+    # import sqlite3
+    # conn = sqlite3.connect("user_info.db")
+    # c = conn.cursor()
+    # c.execute("SELECT song, artist FROM kpop_song")
+    # song_infos = [i for i in c.fetchall()][228:235]
+    # for song_info in song_infos:
+    #     song = song_info[0]
+    #     artist = song_info[1]
+    #     download_youtube_link(song, artist)
+    #
+    # c.close()
+    # conn.close()
 
-    c.close()
-    conn.close()
 
 
