@@ -25,9 +25,9 @@ def download_youtube_link(song, artist, itunes = True):
             '-metadata' if i % 2 == 0 else metadata_keys[i // 2] + '=' + str(metadata[metadata_keys[i // 2]]) for i in
             range(len(metadata) * 2)]
     else:
+        print("no metadata")
         title = artist + ' - ' + song
         cover = wget.download(yt.thumbnail_url)
-        print(yt.thumbnail_url)
         metadata = []
     if itunes == False:
         title = artist + ' - ' + song
@@ -50,7 +50,6 @@ def get_track_data(song, artist):
     lyrics = get_lyrics(metadata['title'], metadata['artist'])
     if lyrics:
         metadata.update({'USLT':lyrics})
-    print(metadata)
     cover = track.artwork_url_100.replace('100', '500')
     file = wget.download(cover, out=artist + ' - ' + song + '.jpg')
     return metadata['artist'] + ' - ' + metadata['title'], file, metadata
@@ -110,7 +109,7 @@ def get_youtube_url(keyword):
 
 if __name__=='__main__':
     # get_lyrics("Always Remember Us This Way", "Lady GaGa")
-    download_youtube_link("그댈 마주하는건 힘들어", "버스커 버스커", itunes=False)
+    download_youtube_link("꽃 길", "BIGBANG(빅뱅)", itunes=False)
     # download_youtube_link("대박이다", "버스커 버스커")
     # import sqlite3
     # conn = sqlite3.connect("user_info.db")
