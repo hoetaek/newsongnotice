@@ -284,7 +284,12 @@ class SongDownloadLink():
                 file = download_youtube_link(song_name, song_artist, itunes=False)
             else:
                 file = download_youtube_link(song_name, song_artist)
-        download_link = upload_get_link(file)
+        try:
+            download_link = upload_get_link(file)
+        except FileNotFoundError:
+            time.sleep(10)
+            self.get_download_link(song_info, search=search)
+            return
         os.unlink(file)
         song[2] = download_link
         if search:
