@@ -212,6 +212,7 @@ class SongDownloadLink():
 
         driver.find_element(By.XPATH, "//input[@type='text']").send_keys(keyword)
         driver.find_element(By.XPATH, "//input[@type='image']").click()
+        driver.find_element(By.PARTIAL_LINK_TEXT, "무료노래다운사이트").click()
         html_source = driver.page_source
         soup = BeautifulSoup(html_source, 'html.parser')
         soup_songs = soup.select("td[align='left']")
@@ -235,7 +236,6 @@ class SongDownloadLink():
 
 
         driver.quit()
-        [print(f) for f in song_info]
         if not song_info:
             return "검색 결과가 존재하지 않습니다."
         else:
