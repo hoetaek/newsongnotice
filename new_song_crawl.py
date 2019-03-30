@@ -247,83 +247,91 @@ class SongDownloadLink():
         if not new_song_info:
             return "검색 결과가 존재하지 않습니다."
         else:
-            result = []
+            results = []
             for i in new_song_info:
-                result.append(self.get_download_link(i, search=True))
-            return result
+                result = self.get_download_link(i, search=True)
+                if result:
+                    results.append(result)
+            return results
 
     def get_download_link(self, song_info, search=False):
         song_type, song = song_info[0], song_info[1]
         song_name = song[0]
         song_artist = song[1]
-        print(song[0], song[1])
-        link = song[2]
-        driver = self.start_driver()
-        driver.get(link)
-
-        html_source = driver.page_source
-        soup = BeautifulSoup(html_source, 'html.parser')
-        try:
-            iframe_link = soup.select('iframe')[2]['src']
-        except IndexError:
-            print('db error')
-            driver.quit()
-            self.get_download_link(song_info, search=search)
-            return
-        except KeyError:
-            iframe_link = soup.select("[target='_blank']")[0]['href']
-        if iframe_link.startswith('..'):
-            url = "https://lover.ne.kr:124" + iframe_link[2:].replace('/link', '').strip()
-            driver.get(url)
-            html_source = driver.page_source
-            driver.quit()
-            soup = BeautifulSoup(html_source, 'html.parser')
-            download_soup = soup.select("script[type='text/javascript']")[-1]
-            download_link = re.findall('https://.*"', str(download_soup))[0][:-1]
-            file = download_mega_link(download_link)
-            # Todo get rid of this
-            if song_type == 'kpop':
-                file = song_artist + ' - ' + song_name + '.mp3'
-        elif iframe_link.startswith("https://mega"):
-            file = download_mega_link(iframe_link)
-            if song_type == 'kpop':
-                file = song_artist + ' - ' + song_name + '.mp3'
-        else:
-            print("no mega file")
-            driver.quit()
-            if song_type == 'kpop':
-                file = download_youtube_link(song_name, song_artist, itunes=False)
-            else:
-                file = download_youtube_link(song_name, song_artist)
-        try:
-            download_link = upload_get_link(file)
-        except FileNotFoundError:
-            print(file, "doesn't exist. sleep 10 sec and try again")
-            time.sleep(10)
-            self.get_download_link(song_info, search=search)
-            return
-        song[2] = download_link
-
         conn = sqlite3.connect('user_info.db')
         c = conn.cursor()
-        if search:
+        song_exist = is_song(c, song_type, song_info[1])
+        c.close()
+        conn.close()
+        if not song_exist:
+            print(song[0], song[1])
+            link = song[2]
+            driver = self.start_driver()
+            driver.get(link)
+
+            html_source = driver.page_source
+            soup = BeautifulSoup(html_source, 'html.parser')
+            try:
+                iframe_link = soup.select('iframe')[2]['src']
+            except IndexError:
+                print('db error')
+                driver.quit()
+                self.get_download_link(song_info, search=search)
+                return
+            except KeyError:
+                iframe_link = soup.select("[target='_blank']")[0]['href']
+            if iframe_link.startswith('..'):
+                url = "https://lover.ne.kr:124" + iframe_link[2:].replace('/link', '').strip()
+                driver.get(url)
+                html_source = driver.page_source
+                driver.quit()
+                soup = BeautifulSoup(html_source, 'html.parser')
+                download_soup = soup.select("script[type='text/javascript']")[-1]
+                download_link = re.findall('https://.*"', str(download_soup))[0][:-1]
+                file = download_mega_link(download_link)
+                # Todo get rid of this
+                if song_type == 'kpop':
+                    file = song_artist + ' - ' + song_name + '.mp3'
+            elif iframe_link.startswith("https://mega"):
+                file = download_mega_link(iframe_link)
+                if song_type == 'kpop':
+                    file = song_artist + ' - ' + song_name + '.mp3'
+            else:
+                print("no mega file")
+                driver.quit()
+                if song_type == 'kpop':
+                    file = download_youtube_link(song_name, song_artist, itunes=False)
+                else:
+                    file = download_youtube_link(song_name, song_artist)
+            try:
+                download_link = upload_get_link(file)
+            except FileNotFoundError:
+                print(file, "doesn't exist. sleep 10 sec and try again")
+                time.sleep(10)
+                self.get_download_link(song_info, search=search)
+                return
+            song[2] = download_link
+
+            conn = sqlite3.connect('user_info.db')
+            c = conn.cursor()
+            if search:
+                insert_song(c, song_type, song)
+                conn.commit()
+                c.close()
+                conn.close()
+                return "곡: " + song_artist + " - " + song_name + \
+                       '\n유튜브 링크 : ' + get_youtube_url(song_artist + " - " + song_name) + \
+                       '\n다운로드 링크 : ' + song[2]
             insert_song(c, song_type, song)
+            for chat_id in get_user_list(c, song_type, song_artist):
+                bot.sendMessage(chat_id= chat_id, #"580916113",
+                                text= "곡: " + song_artist + " - " + song_name +
+                                      '\n유튜브 링크 : ' + get_youtube_url(song_artist + " - " + song_name) +
+                                      '\n다운로드 링크 : ' + song[2])
+
             conn.commit()
             c.close()
             conn.close()
-            return "곡: " + song_artist + " - " + song_name + \
-                   '\n유튜브 링크 : ' + get_youtube_url(song_artist + " - " + song_name) + \
-                   '\n다운로드 링크 : ' + song[2]
-        insert_song(c, song_type, song)
-        for chat_id in get_user_list(c, song_type, song_artist):
-            bot.sendMessage(chat_id= chat_id, #"580916113",
-                            text= "곡: " + song_artist + " - " + song_name +
-                                  '\n유튜브 링크 : ' + get_youtube_url(song_artist + " - " + song_name) +
-                                  '\n다운로드 링크 : ' + song[2])
-
-        conn.commit()
-        c.close()
-        conn.close()
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 token = '751248768:AAEJB5JcAh52nWfrSyKTEISGX8_teJIxNFw'
@@ -332,20 +340,18 @@ bot = Bot(token=token)
 
 if __name__=='__main__':
     Chrome = SongDownloadLink()
-    Chrome.crawl_keyword_list("유재석")
+    Chrome.crawl_kpop_song_list()
+    Chrome.crawl_pop_song_list()
+    for i in range(2):
+        print(i)
+        get_pop_100()
+        get_kpop_100()
+        time.sleep(30)
+    schedule.every(300).minutes.do(get_kpop_100)
+    schedule.every(3).minutes.do(get_pop_100)
+    schedule.every(30).minutes.do(Chrome.crawl_kpop_song_list)
+    schedule.every(30).minutes.do(Chrome.crawl_pop_song_list)
 
-    # Chrome.crawl_kpop_song_list()
-    # Chrome.crawl_pop_song_list()
-    # for i in range(2):
-    #     print(i)
-    #     get_pop_100()
-    #     get_kpop_100()
-    #     time.sleep(30)
-    # schedule.every(300).minutes.do(get_kpop_100)
-    # schedule.every(3).minutes.do(get_pop_100)
-    # schedule.every(30).minutes.do(Chrome.crawl_kpop_song_list)
-    # schedule.every(30).minutes.do(Chrome.crawl_pop_song_list)
-    #
-    # while True:
-    #     schedule.run_pending()
-    #     time.sleep(1)
+    while True:
+        schedule.run_pending()
+        time.sleep(1)
