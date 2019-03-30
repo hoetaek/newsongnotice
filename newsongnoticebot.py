@@ -20,6 +20,7 @@ def get_message(bot, update):
             update.message.reply_text(keyword + "을(를) 검색 중입니다.")
             chrome = SongDownloadLink()
             chrome.crawl_keyword_list(keyword, chat_id)
+            update.message.reply_text("다른 서비스를 신청하고 싶으시면 [/help]를 터치해주세요.")
 
     elif text.startswith("유튜브"):
         keyword = text[3:].strip()
@@ -37,6 +38,7 @@ def get_message(bot, update):
                             text="곡 : " + artist + ' - ' + song + \
                                  '\n유튜브 링크 : ' + get_youtube_url(artist + ' - ' + song) + \
                                  '\n다운로드 링크 : ' + link + "\n\n")
+            update.message.reply_text("다른 서비스를 신청하고 싶으시면 [/help]를 터치해주세요.")
 
         elif splitter_idx != -1 and song and artist:
             update.message.reply_text(artist + ' ' + song + "을(를) 유튜브에서 다운 받는 중입니다.\n곡이 데이터베이스에 저장되지 않습니다.")
@@ -46,6 +48,7 @@ def get_message(bot, update):
                             text="곡 : " + artist + ' - ' + song + \
                                  '\n유튜브 링크 : ' + get_youtube_url(artist + ' - ' + song) + \
                                  '\n다운로드 링크 : ' + link + "\n\n")
+            update.message.reply_text("다른 서비스를 신청하고 싶으시면 [/help]를 터치해주세요.")
 
         else:
             update.message.reply_text("[유튜브 (pop 혹은 kpop) 가수/노래] 형태로 다시 입력해주세요. \n"
@@ -59,7 +62,8 @@ def get_message(bot, update):
             titles = [i[0] for i in get_track_data(keyword, index='all', search=True)]
             update.message.reply_text('\n'.join(titles) + "와 같은 노래들이 있습니다.")
         else:
-            update.message.reply_text("검색 결과가 존재하지 않습니다.ㅠㅠㅠ")
+            update.message.reply_text("검색 결과가 존재하지 않습니다.ㅠㅠㅠ\n"
+                                      "다른 서비스를 신청하고 싶으시면 [/help]를 터치해주세요.")
 
     elif text.startswith("가수"):
         keyword = text[2:].strip()
@@ -121,6 +125,8 @@ def get_message(bot, update):
                                 text="곡 : " + artist + ' - ' + song + \
                                      '\n유튜브 링크 : ' + get_youtube_url(artist + ' - ' + song) + \
                                      '\n다운로드 링크 : ' + link + "\n\n")
+                update.message.reply_text("다른 서비스를 신청하고 싶으시면 [/help]를 터치해주세요.")
+
     conn.commit()
     c.close()
     conn.close()

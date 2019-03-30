@@ -252,7 +252,7 @@ class SongDownloadLink():
                 result = self.get_download_link(i, search=True)
                 if result:
                     bot.send_message(chat_id=chat_id, text=result)
-            return results
+
 
     def get_download_link(self, song_info, search=False):
         song_type, song = song_info[0], song_info[1]
