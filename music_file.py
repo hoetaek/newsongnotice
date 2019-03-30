@@ -102,7 +102,7 @@ def upload_get_link(file_path):
     gauth.LoadCredentialsFile("mycreds.txt")
     if gauth.credentials is None:
         # Authenticate if they're not there
-        gauth.LocalWebserverAuth()
+        gauth.CommandLineAuth()
     elif gauth.access_token_expired:
         # Refresh them if expired
         gauth.Refresh()
