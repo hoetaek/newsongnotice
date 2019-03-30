@@ -7,55 +7,80 @@ import itunespy
 import wget
 import subprocess
 import os, re
+from mutagen.id3 import ID3, USLT
 
 def download_mega_link(link):
     file_name = os.popen('megadl --print-names --no-progress {}'.format(link)).read().replace('\n', '')
     return  file_name
 
 def download_youtube_link(song, artist, itunes = True):
+    print(artist, song)
+    print("downloading from youtube")
     link = get_youtube_url(artist + ' - ' + song)
     yt = YouTube(link)
     file_name = yt.streams.first().download()
+    print("getting track data")
     pattern1 = r'\((.*?)\)'
-    track_data = get_track_data(re.sub(pattern1, '', song), re.sub(pattern1, '', artist))
+    track_data = get_track_data(re.sub(pattern1, '', song) + ' ' + re.sub(pattern1, '', artist))
     if track_data:
-        title, cover, metadata = track_data
+        title, cover, metadata, lyrics = track_data
+        cover = wget.download(cover, out=artist + ' - ' + song + '.jpg')
         metadata_keys = list(metadata.keys())
-        metadata = ['-id3v2_version', '3'] + [
-            '-metadata' if i % 2 == 0 else metadata_keys[i // 2] + '=' + str(metadata[metadata_keys[i // 2]]) for i in
+        metadata = [
+            '-metadata' if i % 2 == 0 else (metadata_keys[i // 2] + '=' + str(metadata[metadata_keys[i // 2]])).encode('utf-8') for i in
             range(len(metadata) * 2)]
     else:
         print("no metadata")
         title = artist + ' - ' + song
+        lyrics = ""
         cover = wget.download(yt.thumbnail_url)
         metadata = []
     if itunes == False:
         title = artist + ' - ' + song
+    print('converting mp4 to mp3')
     music = title + ".mp3"
     command = ['ffmpeg', '-i', file_name.encode('utf-8'), '-i', cover.encode('utf-8'), '-acodec', 'libmp3lame', '-b:a', '256k', '-c:v', 'copy',
-                     '-map', '0:a:0', '-map', '1:v:0', (music).encode('utf-8')]
+                     '-map', '0:a:0', '-map', '1:v:0', music.encode('utf-8')]
     command[11:11] = metadata
     subprocess.call(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    if lyrics:
+        print("lyrics exists")
+        audio = ID3(music)
+        audio.add(USLT(text=lyrics))
+        audio.save()
+
     os.unlink(file_name)
     os.unlink(cover)
     return os.path.basename(music)
 
-def get_track_data(song, artist):
+def get_track_data(term, index=0, search=False):
+    print(term)
     try:
-        track = itunespy.search_track(artist + ' ' + song)[0]
+        tracks = itunespy.search_track(term)
     except LookupError:
         return None
-    metadata = {"title":track.track_name, "album":track.collection_name, "artist":track.artist_name, "genre":track.primary_genre_name,
-                "TYER":track.release_date, "Track":track.track_number, "disc":track.disc_number}
-    lyrics = get_lyrics(metadata['title'], metadata['artist'])
-    if lyrics:
-        metadata.update({'USLT':lyrics})
-    cover = track.artwork_url_100.replace('100', '500')
-    file = wget.download(cover, out=artist + ' - ' + song + '.jpg')
-    return metadata['artist'] + ' - ' + metadata['title'], file, metadata
+    except ConnectionError:
+        print("connection error")
+        return get_track_data(term)
+    track_data = []
+    for track in tracks:
+        metadata = {"title":track.track_name, "album":track.collection_name, "artist":track.artist_name, "genre":track.primary_genre_name,
+                    "TYER":track.release_date, "Track":track.track_number, "disc":track.disc_number}
+        if search == False:
+            lyrics = get_lyrics(metadata['title'], metadata['artist'])
+        else:
+            lyrics = ""
+        cover = track.artwork_url_100.replace('100', '500')
+        track_data.append([metadata['artist'] + ' - ' + metadata['title'], cover, metadata, lyrics])
+    if index == 'all':
+        return track_data
+    return track_data[index]
 
 def get_lyrics(song, artist):
-    url = "http://api.musixmatch.com/ws/1.1/track.search?format=json&q_artist={}&q_track={}&page_size=3&page=1&s_track_rating=desc&apikey=1727b5ea994b4420ee5b6d27a0fd8bf5".format(artist, song)
+    pattern = r'\(feat(.*?)\)'
+    song = re.sub(pattern, '', song).strip()
+    url = "http://api.musixmatch.com/ws/1.1/track.search?format=json&q_artist={}&q_track={}&page_size=3&page=1&s_track_rating=desc" \
+          "&apikey=1727b5ea994b4420ee5b6d27a0fd8bf5".format(urllib.parse.quote_plus(artist), urllib.parse.quote_plus(song))
     response = requests.get(url).json()
     try:
         lyrics_url = response['message']['body']['track_list'][0]['track']['track_share_url']
@@ -94,6 +119,7 @@ def upload_get_link(file_path):
                             'type': 'anyone',
                             'value': 'anyone',
                             'role': 'reader'})
+    os.unlink(file_path)
     return upload_file['alternateLink']
 
 def get_youtube_url(keyword):
@@ -108,21 +134,21 @@ def get_youtube_url(keyword):
     return "no youtube link"
 
 if __name__=='__main__':
-    # get_lyrics("Always Remember Us This Way", "Lady GaGa")
-    download_youtube_link("꽃 길", "BIGBANG(빅뱅)", itunes=False)
-    # download_youtube_link("대박이다", "버스커 버스커")
+    # download_youtube_link("Always Remember Us This Way", "Lady GaGa")
+    # download_youtube_link("꽃 길", "BIGBANG(빅뱅)", itunes=False)
+    get_track_data('장범준')
     # import sqlite3
     # conn = sqlite3.connect("user_info.db")
     # c = conn.cursor()
     # c.execute("SELECT song, artist FROM kpop_song")
-    # song_infos = [i for i in c.fetchall()][228:235]
+    # song_infos = [i for i in c.fetchall()][10:20]
     # for song_info in song_infos:
     #     song = song_info[0]
     #     artist = song_info[1]
-    #     download_youtube_link(song, artist)
+    #     print(get_track_data(song, artist))
     #
     # c.close()
     # conn.close()
-
+    #
 
 

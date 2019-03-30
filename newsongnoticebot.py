@@ -2,8 +2,9 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Bot
 from telegram.ext import Updater, MessageHandler, CommandHandler, CallbackQueryHandler, Filters
 from tempfile import NamedTemporaryFile
 import sqlite3
-from make_db import insert_user, is_user, get_song_list, get_artist_list
+from make_db import insert_user, is_user, insert_song, get_song_list, get_artist_list
 from new_song_crawl import SongDownloadLink, get_youtube_url
+from music_file import upload_get_link, download_youtube_link, get_track_data
 from telegram.ext.dispatcher import run_async
 import os, re, difflib
 
@@ -24,6 +25,45 @@ def get_message(bot, update):
                     update.message.reply_text(r)
             else:
                 update.message.reply_text(result)
+
+    elif text.startswith("유튜브"):
+        keyword = text[3:].strip()
+        space_idx = keyword.find(' ')
+        splitter_idx = keyword.find('/')
+        song_type = keyword[:space_idx].strip()
+        artist = keyword[space_idx + 1:splitter_idx].strip()
+        song = keyword[splitter_idx + 1:].strip()
+        if splitter_idx != -1  and space_idx != -1 and (song_type == 'pop' or song_type == 'kpop') and song and artist:
+            update.message.reply_text(artist + ' ' + song + "을(를) 유튜브에서 다운 받는 중입니다.\n곡이 데이터베이스에 저장됩니다.")
+            file = download_youtube_link(song, artist)
+            link = upload_get_link(file)
+            insert_song(c, song_type, [song, artist, link])
+            bot.sendMessage(chat_id=chat_id,
+                            text="곡 : " + artist + ' - ' + song + \
+                                 '\n유튜브 링크 : ' + get_youtube_url(artist + ' - ' + song) + \
+                                 '\n다운로드 링크 : ' + link + "\n\n")
+
+        elif splitter_idx != -1 and space_idx != -1 and song and artist:
+            update.message.reply_text(artist + ' ' + song + "을(를) 유튜브에서 다운 받는 중입니다.")
+            file = download_youtube_link(song, artist)
+            link = upload_get_link(file)
+            bot.sendMessage(chat_id=chat_id,
+                            text="곡 : " + artist + ' - ' + song + \
+                                 '\n유튜브 링크 : ' + get_youtube_url(artist + ' - ' + song) + \
+                                 '\n다운로드 링크 : ' + link + "\n\n")
+
+        else:
+            update.message.reply_text("[유튜브 (pop 혹은 kpop) 가수/노래] 형태로 다시 입력해주세요. \n"
+                                      "어떤 가수/노래가 있는지 찾고 싶으시면 [아이튠즈 (검색어)]를 입력하여 확인해주세요.")
+
+    elif text.startswith("아이튠즈"):
+        keyword = text[4:].strip()
+        track_data = get_track_data(keyword, index='all', search=True)
+        if track_data:
+            titles = [i[0] for i in get_track_data(keyword, index='all', search=True)]
+            update.message.reply_text('\n'.join(titles) + "와 같은 노래들이 있습니다.")
+        else:
+            update.message.reply_text("검색 결과가 존재하지 않습니다.ㅠㅠㅠ")
 
     elif text.startswith("가수"):
         keyword = text[2:].strip()
@@ -85,6 +125,9 @@ def get_message(bot, update):
                                 text="곡 : " + artist + ' - ' + song + \
                                      '\n유튜브 링크 : ' + get_youtube_url(artist + ' - ' + song) + \
                                      '\n다운로드 링크 : ' + link + "\n\n")
+    conn.commit()
+    c.close()
+    conn.close()
 
 def show_dif(a, b):
     result = difflib.ndiff(a, b)
@@ -105,8 +148,9 @@ def start(bot, update):
         '새로운 노래 알림봇을 추가해주셔서 감사합니다.\n'
         '차트에 새로 올라오는 노래 알림을 받고 싶다면 [/chart]를 터치해주세요.\n'
         '새로운 곡 다운로드 링크 알림을 받고 싶으시면 [/new_download]를 터치해주세요\n'
-        '노래를 찾고 싶으시면 [/search]를 터치해주세요\n'
         '신청하신 서비를 확인하고 싶으시면 [/check_service]를 터치해주세요\n'
+        '노래를 찾고 싶으시면 [/search]를 터치해주세요\n'
+        '텍스트로 검색하는 방법을 알고 싶으시면 [/command]를 터치해주세요.\n'
         '도움이 필요하시면 [/help]를 터치해주세요.')
 
 def stop(bot, update):
@@ -133,7 +177,8 @@ def help(bot, update):
         '차트에 새로 올라오는 노래 알림을 받고 싶다면 [/chart]를 터치해주세요.\n'
         '새로운 곡 다운로드 링크 알림을 받고 싶으시면 [/new_download]를 터치해주세요\n'
         '노래를 찾고 싶으시면 [/search]를 터치해주세요.\n'
-        '신청하신 서비를 확인하고 싶으시면 [/check_service]를 터치해주세요\n\n'
+        '신청하신 서비를 확인하고 싶으시면 [/check_service]를 터치해주세요\n'
+        '텍스트로 검색하는 방법을 알고 싶으시면 [/command]를 터치해주세요.\n\n'
         '신청 가능한 가수들이 궁금하시면 [/all_artists]를 터치해주세요.')
 
 def check_service(bot, update):
@@ -174,6 +219,22 @@ def check_service(bot, update):
     update.message.reply_text(
         "다른 서비스를 다시 신청하고 싶으시면 [/help]를 터치해주세요."
     )
+
+def command(bot, update):
+    update.message.reply_text(
+        '노래 검색은 크게 4가지 방법이 있습니다.(데이터베이스 검색, 웹사이트 검색, 유튜브 다운로드, 아이튠즈 음악 정보 검색)\n'
+        '1. 데이터베이스 검색이 속도가 가장 빠르고 간단합니다. 다음과 같은 형식으로 입력하면 됩니다.\n'
+        '[가수 (검색어)]\n'
+        '[노래 (검색어)]\n\n'
+        '2. 웹사이트 검색은 약간 느리고 검색 결과를 모조리 보내주기 때문에 메시지 폭탄을 받으실 수 있습니다.\n'
+        '[검색 (검색어)]\n'
+        '3. 유튜브 다운로드는 검색어로 검색 결과 가장 위에 올라와 있는 동영상의 음원을 보내줍니다.(검색어에 주의하세요.)\n'
+        '[유튜브 (pop 혹은 kpop) (가수 이름)/(노래 이름)]\n'
+        '아래와 같이 (pop 혹은 kpop)을 추가하면 데이터베이스에 저장되며 다음에 더욱 빠르게 불러올 수 있습니다.\n'
+        '[유튜브 (가수 이름)/(노래 이름)]\n\n'
+        '4. 아이튠즈에서 노래나 가수의 정보를 토대로 여러 곡을 검색할 수 있습니다\n'
+        '[아이튠즈 (검색어)]\n\n'
+        '대괄호는 편의상 표시했습니다. 직접 입력하실 때는 제외해주세요.')
 
 def chart(bot, update):
     update.message.reply_text(
@@ -790,6 +851,7 @@ if __name__=='__main__':
     updater.dispatcher.add_handler(CommandHandler('start', start))
     updater.dispatcher.add_handler(CommandHandler('stop', stop))
     updater.dispatcher.add_handler(CommandHandler('help', help))
+    updater.dispatcher.add_handler(CommandHandler('command', command))
     updater.dispatcher.add_handler(CommandHandler('all_artists', get_all_artists))
     updater.dispatcher.add_handler(CommandHandler('search', search))
     updater.dispatcher.add_handler(CommandHandler('chart', chart))
