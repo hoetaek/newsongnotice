@@ -306,9 +306,8 @@ class SongDownloadLink():
             try:
                 download_link = upload_get_link(file)
             except FileNotFoundError:
-                print(file, "doesn't exist. sleep 10 sec and try again")
-                time.sleep(10)
-                self.get_download_link(song_info, search=search)
+                bot.sendMessage(chat_id="580916113",
+                                text="mega 5GB exceeded")
                 return
             song[2] = download_link
 

@@ -43,8 +43,8 @@ def get_message(bot, update):
                                  '\n유튜브 링크 : ' + get_youtube_url(artist + ' - ' + song) + \
                                  '\n다운로드 링크 : ' + link + "\n\n")
 
-        elif splitter_idx != -1 and space_idx != -1 and song and artist:
-            update.message.reply_text(artist + ' ' + song + "을(를) 유튜브에서 다운 받는 중입니다.")
+        elif splitter_idx != -1 and song and artist:
+            update.message.reply_text(artist + ' ' + song + "을(를) 유튜브에서 다운 받는 중입니다.\n곡이 데이터베이스에 저장되지 않습니다.")
             file = download_youtube_link(song, artist)
             link = upload_get_link(file)
             bot.sendMessage(chat_id=chat_id,
@@ -54,7 +54,8 @@ def get_message(bot, update):
 
         else:
             update.message.reply_text("[유튜브 (pop 혹은 kpop) 가수/노래] 형태로 다시 입력해주세요. \n"
-                                      "어떤 가수/노래가 있는지 찾고 싶으시면 [아이튠즈 (검색어)]를 입력하여 확인해주세요.")
+                                      "어떤 가수/노래가 있는지 찾고 싶으시면 [아이튠즈 (검색어)]를 입력하여 확인해주세요.\n"
+                                      "검색 관련 설명을 보기 위해서는 [/command]를 터치해주세요.")
 
     elif text.startswith("아이튠즈"):
         keyword = text[4:].strip()
