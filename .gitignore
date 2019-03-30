@@ -103,5 +103,11 @@ venv.bak/
 # mypy
 .mypy_cache/
 
-# drive credential
+# pydrive credential
 mycreds.txt
+
+# chart_info
+latest.json
+
+# user info db
+user_info.db
