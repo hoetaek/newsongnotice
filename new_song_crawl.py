@@ -204,7 +204,7 @@ class SongDownloadLink():
         if new_song_info and current_page < end_page:
             self.crawl_pop_song_list(current_page=current_page + 1)
 
-    def crawl_keyword_list(self, keyword):
+    def crawl_keyword_list(self, keyword, chat_id):
         url = "https://lover.ne.kr:124/bbs/zboard.php?category=1&id=sitelink1&page=1&page_num=24&sn=off&ss=on&sc=on&keyword=&select_arrange=headnum&desc=asc"
         driver = self.start_driver()
         driver.get(url)
@@ -251,7 +251,7 @@ class SongDownloadLink():
             for i in new_song_info:
                 result = self.get_download_link(i, search=True)
                 if result:
-                    results.append(result)
+                    bot.send_message(chat_id=chat_id, text=result)
             return results
 
     def get_download_link(self, song_info, search=False):
@@ -307,6 +307,7 @@ class SongDownloadLink():
             try:
                 download_link = upload_get_link(file)
             except FileNotFoundError:
+                print("can't reach", iframe_link)
                 bot.sendMessage(chat_id="580916113",
                                 text="mega 5GB exceeded")
                 return

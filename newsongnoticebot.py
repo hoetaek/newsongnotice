@@ -19,12 +19,7 @@ def get_message(bot, update):
         if keyword:
             update.message.reply_text(keyword + "을(를) 검색 중입니다.")
             chrome = SongDownloadLink()
-            result = chrome.crawl_keyword_list(keyword)
-            if type(result) == list:
-                for r in result:
-                    update.message.reply_text(r)
-            else:
-                update.message.reply_text(result)
+            chrome.crawl_keyword_list(keyword, chat_id)
 
     elif text.startswith("유튜브"):
         keyword = text[3:].strip()
