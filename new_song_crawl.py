@@ -245,9 +245,8 @@ class SongDownloadLink():
         new_song_info = kpop_new_song_info + pop_new_song_info
         driver.quit()
         if not new_song_info:
-            return "검색 결과가 존재하지 않습니다."
+            bot.send_message(chat_id=chat_id, text="검색 결과가 존재하지 않습니다.")
         else:
-            results = []
             for i in new_song_info:
                 result = self.get_download_link(i, search=True)
                 if result:
