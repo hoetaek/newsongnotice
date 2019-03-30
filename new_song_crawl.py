@@ -290,12 +290,12 @@ class SongDownloadLink():
                 download_link = re.findall('https://.*"', str(download_soup))[0][:-1]
                 file = download_mega_link(download_link)
                 # Todo get rid of this
-                if song_type == 'kpop':
-                    file = song_artist + ' - ' + song_name + '.mp3'
+                # if song_type == 'kpop':
+                #     file = song_artist + ' - ' + song_name + '.mp3'
             elif iframe_link.startswith("https://mega"):
                 file = download_mega_link(iframe_link)
-                if song_type == 'kpop':
-                    file = song_artist + ' - ' + song_name + '.mp3'
+                # if song_type == 'kpop':
+                #     file = song_artist + ' - ' + song_name + '.mp3'
             else:
                 print("no mega file")
                 driver.quit()
