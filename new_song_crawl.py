@@ -294,6 +294,7 @@ class SongDownloadLink():
                 #     file = song_artist + ' - ' + song_name + '.mp3'
             elif iframe_link.startswith("https://mega"):
                 file = download_mega_link(iframe_link)
+                driver.quit()
                 # if song_type == 'kpop':
                 #     file = song_artist + ' - ' + song_name + '.mp3'
             else:
@@ -344,9 +345,9 @@ if __name__=='__main__':
     for i in range(2):
         print(i)
         get_pop_100()
-        get_kpop_100()
+        # get_kpop_100()
         time.sleep(30)
-    schedule.every(300).minutes.do(get_kpop_100)
+    # schedule.every(300).minutes.do(get_kpop_100)
     schedule.every(3).minutes.do(get_pop_100)
     schedule.every(30).minutes.do(Chrome.crawl_kpop_song_list)
     schedule.every(30).minutes.do(Chrome.crawl_pop_song_list)
