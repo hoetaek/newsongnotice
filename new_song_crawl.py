@@ -167,8 +167,8 @@ class SongDownloadLink():
         c.close()
         conn.close()
         for i in new_song_info[:]:
-            if self.get_download_link(i) == 'remove':
-                new_song_info.remove(i)
+            if self.get_download_link(i) == 'download limit':
+                return "download limit"
         if new_song_info and current_page < end_page:
             self.crawl_kpop_song_list(current_page=current_page + 1)
 
@@ -199,8 +199,8 @@ class SongDownloadLink():
         c.close()
         conn.close()
         for i in new_song_info[:]:
-            if self.get_download_link(i) == 'remove':
-                new_song_info.remove(i)
+            if self.get_download_link(i) == 'download limit':
+                return "download limit"
         if new_song_info and current_page < end_page:
             self.crawl_pop_song_list(current_page=current_page + 1)
 
@@ -309,7 +309,7 @@ class SongDownloadLink():
                 print("can't reach", iframe_link)
                 bot.sendMessage(chat_id="580916113",
                                 text="mega 5GB exceeded")
-                return
+                return "download limit"
             song[2] = download_link
 
             conn = sqlite3.connect('user_info.db')

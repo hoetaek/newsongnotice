@@ -78,7 +78,6 @@ def get_message(bot, update):
                 for song_type in ['kpop', 'pop']:
                     song_infos = get_song_list(c, song_type, artist)
                     if len(song_infos) > 1:
-                        print("more than one song")
                         show_list = [InlineKeyboardButton(song_info[2] + ' - ' + song_info[1],
                                                           callback_data="send, " + song_type + ", " + str(song_info[0]))
                                      for song_info in song_infos] \
@@ -91,7 +90,6 @@ def get_message(bot, update):
                                               chat_id=chat_id,
                                               reply_markup=show_markup)
                     elif len(song_infos) == 1:
-                        print("one song")
                         song_info = song_infos[0]
                         song = song_info[1]
                         artist = song_info[2]
@@ -316,7 +314,7 @@ def get_all_artists(bot, update):
             [get_chosung(artist[0]) if is_hangul(artist[0]) else artist[0].upper() if artist[0].isalpha() else artist[0]
              for artist in kpop_artists])))
 
-    chosung_list1, chosung_list2 = chosung_list[:len(chosung_list)//2], chosung_list[len(chosung_list)//2:]
+    chosung_list1, chosung_list2, chosung_list3 = chosung_list[:len(chosung_list)//3], chosung_list[len(chosung_list)//3:len(chosung_list)//3*2], chosung_list[len(chosung_list)//3*2:]
     update.message.reply_text(
         "\n".join(
             ["- " + ', '.join([artist for artist in kpop_artists if startswith(chosung, artist[0])]) for chosung in
@@ -326,6 +324,11 @@ def get_all_artists(bot, update):
         "\n".join(
             ["- " + ', '.join([artist for artist in kpop_artists if startswith(chosung, artist[0])]) for chosung in
              chosung_list2])
+    )
+    update.message.reply_text(
+        "\n".join(
+            ["- " + ', '.join([artist for artist in kpop_artists if startswith(chosung, artist[0])]) for chosung in
+             chosung_list3])
     )
     update.message.reply_text(
         "팝송 가수는  다음과 같이 있습니다.\n"
