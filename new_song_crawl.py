@@ -318,13 +318,23 @@ class SongDownloadLink():
                 if not file :
                     if err.endswith("Can't determine download url"):
                         pass
-                    else:
+                    elif err.endswith("giving up"):
+                        bot.sendMessage(chat_id="580916113",
+                                        text="giving up, try again 300 sec later\n" + str(err))
+                        time.sleep(200)
+                        self.get_download_link(song_info, search=search)
+                        return
+                    elif err.endswith("returned 509"):
                         print("change the ip of the server and try again")
                         change_ip()
                         bot.sendMessage(chat_id="580916113",
-                                        text="change the ip of the server and try again" + str(err))
+                                        text="change the ip of the server and try again\n" + str(err))
                         self.get_download_link(song_info, search=search)
                         return
+                    else:
+                        bot.sendMessage(chat_id="580916113",
+                                        text="unknow error program exit\n" + str(err))
+                        raise SystemExit
                 driver.quit()
                 # if song_type == 'kpop':
                 #     file = song_artist + ' - ' + song_name + '.mp3'

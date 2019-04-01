@@ -63,7 +63,7 @@ def get_track_data(term, index=0, search=False):
         return None
     except ConnectionError:
         print("connection error")
-        return get_track_data(term)
+        return get_track_data(term, index=index, search=search)
     track_data = []
     for track in tracks:
         metadata = {"title":track.track_name, "album":track.collection_name, "artist":track.artist_name, "genre":track.primary_genre_name,
