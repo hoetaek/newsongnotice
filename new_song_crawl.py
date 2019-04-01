@@ -170,7 +170,7 @@ class SongDownloadLink():
         for i in new_song_info[:]:
             if self.get_download_link(i) == 'download limit':
                 return "download limit"
-        if new_song_info and current_page < end_page:
+        if new_song_info:# and current_page < end_page:
             self.crawl_kpop_song_list(current_page=current_page + 1)
 
     def crawl_pop_song_list(self, current_page = 1, end_page = 25):
@@ -202,7 +202,7 @@ class SongDownloadLink():
         for i in new_song_info[:]:
             if self.get_download_link(i) == 'download limit':
                 return "download limit"
-        if new_song_info and current_page < end_page:
+        if new_song_info:# and current_page < end_page:
             self.crawl_pop_song_list(current_page=current_page + 1)
 
     def crawl_keyword_list(self, keyword, chat_id):
@@ -381,14 +381,14 @@ bot = Bot(token=token)
 
 if __name__=='__main__':
     Chrome = SongDownloadLink()
-    Chrome.crawl_kpop_song_list()
-    Chrome.crawl_pop_song_list()
+    Chrome.crawl_kpop_song_list(current_page=19)
+    Chrome.crawl_pop_song_list(current_page=19)
     for i in range(2):
         print(i)
         get_pop_100()
-        # get_kpop_100()
+        get_kpop_100()
         time.sleep(30)
-    # schedule.every(300).minutes.do(get_kpop_100)
+    schedule.every(300).minutes.do(get_kpop_100)
     schedule.every(3).minutes.do(get_pop_100)
     schedule.every(30).minutes.do(Chrome.crawl_kpop_song_list)
     schedule.every(30).minutes.do(Chrome.crawl_pop_song_list)
