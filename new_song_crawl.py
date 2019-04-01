@@ -10,6 +10,7 @@ import os
 from telegram import Bot
 from make_db import get_user_list, insert_song, is_song
 from music_file import download_mega_link, download_youtube_link, upload_get_link, get_youtube_url
+from server import change_ip
 
 def get_kpop_100():
     latest_path = os.path.join(BASE_DIR, 'latest.json')
@@ -290,19 +291,30 @@ class SongDownloadLink():
                 file, err = download_mega_link(download_link)
                 if not file :
                     if err.endswith("Can't determine download url"):
-                        return
+                        pass
                     else:
-                        print("change the ip of the server")
+                        print("change the ip of the server and try again")
+                        change_ip()
+                        bot.sendMessage(chat_id="580916113",
+                                        text="change the ip of the server and try again" + str(err))
+                        self.get_download_link(song_info, search=search)
+                        return
                 # Todo get rid of this
                 # if song_type == 'kpop':
                 #     file = song_artist + ' - ' + song_name + '.mp3'
             elif iframe_link.startswith("https://mega"):
                 file, err = download_mega_link(iframe_link)
+                download_link = iframe_link
                 if not file :
                     if err.endswith("Can't determine download url"):
-                        return
+                        pass
                     else:
-                        print("change the ip of the server")
+                        print("change the ip of the server and try again")
+                        change_ip()
+                        bot.sendMessage(chat_id="580916113",
+                                        text="change the ip of the server and try again" + str(err))
+                        self.get_download_link(song_info, search=search)
+                        return
                 driver.quit()
                 # if song_type == 'kpop':
                 #     file = song_artist + ' - ' + song_name + '.mp3'
@@ -313,14 +325,13 @@ class SongDownloadLink():
                     file = download_youtube_link(song_name, song_artist, itunes=False)
                 else:
                     file = download_youtube_link(song_name, song_artist)
+                download_link = ""
+
+
             try:
-                download_link = upload_get_link(file)
+                song[2] = upload_get_link(file)
             except FileNotFoundError:
-                print("can't reach", iframe_link)
-                bot.sendMessage(chat_id="580916113",
-                                text="mega 5GB exceeded")
-                return "download limit"
-            song[2] = download_link
+                song[2] = download_link
 
             conn = sqlite3.connect('user_info.db')
             c = conn.cursor()
