@@ -5,13 +5,14 @@ import urllib.parse, requests
 from bs4 import BeautifulSoup
 import itunespy
 import wget
-from subprocess import Popen, PIPE
+from subprocess import Popen, run, PIPE
 import os, re
 from mutagen.id3 import ID3, USLT
 
 def download_mega_link(link):
-    file_name = Popen(["megadl", "--print-names", " --no-progress", link], stdout=PIPE, stderr=PIPE)
-    output, err = file_name.communicate()
+    file_name = run(["megadl", "--print-names", "--no-progress", link.encode('utf-8')], stdout=PIPE, stderr=PIPE)
+    output = file_name.stdout
+    err = file_name.stderr
     return  output.decode('utf-8').strip(), err.decode('utf-8').strip()
 
 def download_youtube_link(song, artist, itunes = True):
@@ -139,9 +140,10 @@ if __name__=='__main__':
     # download_youtube_link("꽃 길", "BIGBANG(빅뱅)", itunes=False)
     # get_track_data('장범준')
     # import sqlite3
-    mega_output = download_mega_link("https://mega.nz/#!L7pDjYKS!bHnuF-f1Q4B8Vf4yo9QcBuPYEtR2tNI228CjPvXzgVE")
-    if mega_output[1].endswith("Can't determine download url"):
-        print("True")
+    mega_output = download_mega_link("https://mega.nz/#!3iZCxKIS!8LhjRrLOPBcJT892x3sS8UNBZ2JTYPI1fPtD-Lss7p0")
+    # if mega_output[1].endswith("Can't determine download url"):
+    #     print("True")
+    [print(m) for m in mega_output]
     # conn = sqlite3.connect("user_info.db")
     # c = conn.cursor()
     # c.execute("SELECT song, artist FROM kpop_song")

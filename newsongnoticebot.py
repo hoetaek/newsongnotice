@@ -64,6 +64,8 @@ def get_message(bot, update):
                        '-b:a', '256k', '-c:v', 'copy', '-map', '0:a:0', '-map', '1:v:0', music_file_name.encode('utf-8')]
             subprocess.call(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             music_drive_link = upload_get_link(music_file_name)
+            os.unlink(video_file_name)
+            os.unlink(music_file_name)
             update.message.reply_text("{}을(를) 유튜브에서 다운 받았습니다.\n"
                                       "동영상은 {}에 들어가서 확인해주세요.\n"
                                       "음원은 {}에 들어가서 확인해주세요.".format(keyword, video_drive_link, music_drive_link))
