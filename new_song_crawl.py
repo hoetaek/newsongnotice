@@ -346,7 +346,6 @@ class SongDownloadLink():
             conn = sqlite3.connect('user_info.db')
             c = conn.cursor()
             if search:
-                print(song[2])
                 insert_song(c, song_type, song)
                 conn.commit()
                 c.close()
