@@ -8,6 +8,7 @@ import sqlite3
 import json
 import os
 from telegram import Bot
+from telegram.error import NetworkError
 from make_db import get_user_list, insert_song, is_song
 from music_file import download_mega_link, download_youtube_link, upload_get_link, get_youtube_url
 from server import change_ip
@@ -171,7 +172,12 @@ class SongDownloadLink():
             if self.get_download_link(i) == 'download limit':
                 return "download limit"
         if new_song_info:# and current_page < end_page:
-            self.crawl_kpop_song_list(current_page=current_page + 1)
+            try:
+                self.crawl_kpop_song_list(current_page=current_page + 1)
+            except NetworkError:
+                print("network error, going to sleep for 300 sec")
+                time.sleep(300)
+                self.crawl_kpop_song_list(current_page=current_page + 1)
 
     def crawl_pop_song_list(self, current_page = 1, end_page = 25):
         print("pop page num : ", current_page)
@@ -203,7 +209,12 @@ class SongDownloadLink():
             if self.get_download_link(i) == 'download limit':
                 return "download limit"
         if new_song_info:# and current_page < end_page:
-            self.crawl_pop_song_list(current_page=current_page + 1)
+            try:
+                self.crawl_pop_song_list(current_page=current_page + 1)
+            except NetworkError:
+                print("network error, going to sleep for 300 sec")
+                time.sleep(300)
+                self.crawl_pop_song_list(current_page=current_page + 1)
 
     def crawl_keyword_list(self, keyword, chat_id):
         url = "https://lover.ne.kr:124/bbs/zboard.php?category=1&id=sitelink1&page=1&page_num=24&sn=off&ss=on&sc=on&keyword=&select_arrange=headnum&desc=asc"
@@ -336,7 +347,7 @@ class SongDownloadLink():
                                         text="unknow error program exit\n" + str(err))
                         raise SystemExit
                 driver.quit()
-                # if song_type == 'kpop':
+                # if song_type == 'kpop': telegram.error.NetworkError
                 #     file = song_artist + ' - ' + song_name + '.mp3'
             else:
                 print("no mega file")
@@ -381,7 +392,7 @@ bot = Bot(token=token)
 
 if __name__=='__main__':
     Chrome = SongDownloadLink()
-    Chrome.crawl_kpop_song_list(current_page=19)
+    Chrome.crawl_kpop_song_list(current_page=40)
     Chrome.crawl_pop_song_list(current_page=19)
     for i in range(2):
         print(i)
