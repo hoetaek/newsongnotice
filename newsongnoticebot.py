@@ -57,15 +57,17 @@ def get_message(bot, update):
             yt = YouTube(link)
             update.message.reply_text("{}을(를) 유튜브에서 다운 받는 중입니다.".format(keyword))
             video_file_name = yt.streams.first().download()
-            video_drive_link = upload_get_link(video_file_name)
             music_file_name = video_file_name[:-1] + '3'
             cover = wget.download(yt.thumbnail_url)
-            command = ['ffmpeg', '-i', video_file_name.encode('utf-8'), '-i', cover.encode('utf-8'), '-acodec', 'libmp3lame',
-                       '-b:a', '256k', '-c:v', 'copy', '-map', '0:a:0', '-map', '1:v:0', music_file_name.encode('utf-8')]
+            update.message.reply_text("{}을(를) 음원으로 변환 중입니다.".format(keyword))
+            command = ['ffmpeg', '-i', video_file_name.encode('utf-8'), '-i', cover.encode('utf-8'), '-acodec',
+                       'libmp3lame',
+                       '-b:a', '256k', '-c:v', 'copy', '-map', '0:a:0', '-map', '1:v:0',
+                       music_file_name.encode('utf-8')]
             subprocess.call(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            video_drive_link = upload_get_link(video_file_name)
             music_drive_link = upload_get_link(music_file_name)
-            os.unlink(video_file_name)
-            os.unlink(music_file_name)
+            os.unlink(cover)
             update.message.reply_text("{}을(를) 유튜브에서 다운 받았습니다.\n"
                                       "동영상은 {}에 들어가서 확인해주세요.\n"
                                       "음원은 {}에 들어가서 확인해주세요.".format(keyword, video_drive_link, music_drive_link))
@@ -861,7 +863,7 @@ def startswith(pattern, word):
 
 if __name__=='__main__':
     token = '751248768:AAEJB5JcAh52nWfrSyKTEISGX8_teJIxNFw'
-    # token = "790146878:AAFKnWCnBV9WMSMYPnfcRXukmftgDyV_BlY" #this is a test bot
+    token = "790146878:AAFKnWCnBV9WMSMYPnfcRXukmftgDyV_BlY" #this is a test bot
 
     bot = Bot(token=token)
 
