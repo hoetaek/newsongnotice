@@ -287,12 +287,22 @@ class SongDownloadLink():
                 soup = BeautifulSoup(html_source, 'html.parser')
                 download_soup = soup.select("script[type='text/javascript']")[-1]
                 download_link = re.findall('https://.*"', str(download_soup))[0][:-1]
-                file = download_mega_link(download_link)
+                file, err = download_mega_link(download_link)
+                if not file :
+                    if err.endswith("Can't determine download url"):
+                        return
+                    else:
+                        print("change the ip of the server")
                 # Todo get rid of this
                 # if song_type == 'kpop':
                 #     file = song_artist + ' - ' + song_name + '.mp3'
             elif iframe_link.startswith("https://mega"):
-                file = download_mega_link(iframe_link)
+                file, err = download_mega_link(iframe_link)
+                if not file :
+                    if err.endswith("Can't determine download url"):
+                        return
+                    else:
+                        print("change the ip of the server")
                 driver.quit()
                 # if song_type == 'kpop':
                 #     file = song_artist + ' - ' + song_name + '.mp3'

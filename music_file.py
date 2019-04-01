@@ -5,13 +5,14 @@ import urllib.parse, requests
 from bs4 import BeautifulSoup
 import itunespy
 import wget
-import subprocess
+from subprocess import Popen, PIPE
 import os, re
 from mutagen.id3 import ID3, USLT
 
 def download_mega_link(link):
-    file_name = os.popen('megadl --print-names --no-progress {}'.format(link)).read().replace('\n', '')
-    return  file_name
+    file_name = Popen(["megadl", "--print-names", " --no-progress", link], stdout=PIPE, stderr=PIPE)
+    output, err = file_name.communicate()
+    return  output.decode('utf-8').strip(), err.decode('utf-8').strip()
 
 def download_youtube_link(song, artist, itunes = True):
     print(artist, song)
@@ -42,7 +43,7 @@ def download_youtube_link(song, artist, itunes = True):
     command = ['ffmpeg', '-i', file_name.encode('utf-8'), '-i', cover.encode('utf-8'), '-acodec', 'libmp3lame', '-b:a', '256k', '-c:v', 'copy',
                      '-map', '0:a:0', '-map', '1:v:0', music.encode('utf-8')]
     command[11:11] = metadata
-    subprocess.call(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    Popen(command, stdout=PIPE, stderr=PIPE)
     if lyrics:
         print("lyrics exists")
         audio = ID3(music)
@@ -136,8 +137,11 @@ def get_youtube_url(keyword):
 if __name__=='__main__':
     # download_youtube_link("Always Remember Us This Way", "Lady GaGa")
     # download_youtube_link("꽃 길", "BIGBANG(빅뱅)", itunes=False)
-    get_track_data('장범준')
+    # get_track_data('장범준')
     # import sqlite3
+    mega_output = download_mega_link("https://mega.nz/#!L7pDjYKS!bHnuF-f1Q4B8Vf4yo9QcBuPYEtR2tNI228CjPvXzgVE")
+    if mega_output[1].endswith("Can't determine download url"):
+        print("True")
     # conn = sqlite3.connect("user_info.db")
     # c = conn.cursor()
     # c.execute("SELECT song, artist FROM kpop_song")

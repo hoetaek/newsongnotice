@@ -6,7 +6,8 @@ from make_db import insert_user, is_user, insert_song, get_song_list, get_artist
 from new_song_crawl import SongDownloadLink, get_youtube_url
 from music_file import upload_get_link, download_youtube_link, get_track_data
 from telegram.ext.dispatcher import run_async
-import os, re, difflib
+from pytube import YouTube
+import os, re, difflib, subprocess, wget
 
 @run_async
 def get_message(bot, update):
@@ -51,9 +52,18 @@ def get_message(bot, update):
             update.message.reply_text("다른 서비스를 신청하고 싶으시면 [/help]를 터치해주세요.")
 
         else:
-            update.message.reply_text("[유튜브 (pop 혹은 kpop) 가수/노래] 형태로 다시 입력해주세요. \n"
-                                      "어떤 가수/노래가 있는지 찾고 싶으시면 [아이튠즈 (검색어)]를 입력하여 확인해주세요.\n"
-                                      "검색 관련 설명을 보기 위해서는 [/command]를 터치해주세요.")
+            update.message.reply_text("{}을(를) 유튜브에서 검색중입니다.".format(keyword))
+            link = get_youtube_url(keyword)
+            yt = YouTube(link)
+            update.message.reply_text("{}을(를) 유튜브에서 다운 받는 중입니다.".format(keyword))
+            video_file_name = yt.streams.first().download()
+            video_drive_link = upload_get_link(video_file_name)
+            music = video_file_name[:-1] + '3'
+            cover = wget.download(yt.thumbnail_url)
+            command = ['ffmpeg', '-i', video_file_name.encode('utf-8'), '-i', cover.encode('utf-8'), '-acodec', 'libmp3lame',
+                       '-b:a', '256k', '-c:v', 'copy', '-map', '0:a:0', '-map', '1:v:0', music.encode('utf-8')]
+            subprocess.call(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            update.message.reply_text("{}을(를) 유튜브에서 다운 받았습니다.".format(keyword, video_drive_link))
 
     elif text.startswith("아이튠즈"):
         keyword = text[4:].strip()
@@ -123,7 +133,7 @@ def get_message(bot, update):
                                 text="곡 : " + artist + ' - ' + song + \
                                      '\n유튜브 링크 : ' + get_youtube_url(artist + ' - ' + song) + \
                                      '\n다운로드 링크 : ' + link + "\n\n")
-                update.message.reply_text("다른 서비스를 신청하고 싶으시면 [/help]를 터치해주세요.")
+            update.message.reply_text("다른 서비스를 신청하고 싶으시면 [/help]를 터치해주세요.")
 
     conn.commit()
     c.close()
