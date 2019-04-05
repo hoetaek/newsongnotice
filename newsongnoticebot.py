@@ -328,47 +328,27 @@ def get_all_artists(bot, update):
     update.message.reply_text(
         "한국 가수는 다음과 같이 있습니다.\n"
     )
+    n = 5
     chosung_list = sorted(
         list(set(
             [get_chosung(artist[0]) if is_hangul(artist[0]) else artist[0].upper() if artist[0].isalpha() else artist[0]
              for artist in kpop_artists])))
 
-    chosung_list1, chosung_list2, chosung_list3 = chosung_list[:len(chosung_list)//3], chosung_list[len(chosung_list)//3:len(chosung_list)//3*2], chosung_list[len(chosung_list)//3*2:]
-    update.message.reply_text(
-        "\n".join(
-            ["- " + ', '.join([artist for artist in kpop_artists if startswith(chosung, artist[0])]) for chosung in
-             chosung_list1])
-    )
-    update.message.reply_text(
-        "\n".join(
-            ["- " + ', '.join([artist for artist in kpop_artists if startswith(chosung, artist[0])]) for chosung in
-             chosung_list2])
-    )
-    update.message.reply_text(
-        "\n".join(
-            ["- " + ', '.join([artist for artist in kpop_artists if startswith(chosung, artist[0])]) for chosung in
-             chosung_list3])
-    )
+    k_artists_by_chosung = ["- " + ', '.join([artist for artist in kpop_artists if startswith(chosung, artist[0])]) for chosung in chosung_list]
+    k_len = len(k_artists_by_chosung)
+    for artist in [k_artists_by_chosung[k_len//n*j:k_len//n*(j+1)] for j in range(n)]:
+        update.message.reply_text('\n'.join(artist))
+
+
     update.message.reply_text(
         "팝송 가수는  다음과 같이 있습니다.\n"
     )
     alphabet_list = sorted(list(set([artist[0].upper() if artist[0].isalpha() else artist[0] for artist in pop_artists])))
-    alphabet_list1, alphabet_list2, alphabet_list3 = alphabet_list[:len(alphabet_list)//3], alphabet_list[len(alphabet_list)//3:len(alphabet_list)//3*2], alphabet_list[len(alphabet_list)//3*2:]
-    update.message.reply_text(
-        "\n".join(
-            ["- " + ', '.join([artist for artist in pop_artists if startswith(alphabet, artist[0])]) for alphabet in
-             alphabet_list1])
-    )
-    update.message.reply_text(
-        "\n".join(
-            ["- " + ', '.join([artist for artist in pop_artists if startswith(alphabet, artist[0])]) for alphabet in
-             alphabet_list2])
-    )
-    update.message.reply_text(
-        "\n".join(
-            ["- " + ', '.join([artist for artist in pop_artists if startswith(alphabet, artist[0])]) for alphabet in
-             alphabet_list3])
-    )
+    p_artists_by_alphabets = ["- " + ', '.join([artist for artist in pop_artists if startswith(alphabet, artist[0])]) for alphabet in alphabet_list]
+    p_len = len(p_artists_by_alphabets)
+    for artist in [p_artists_by_alphabets[p_len // n * j:p_len // n * (j + 1)] for j in range(n)]:
+        update.message.reply_text('\n'.join(artist))
+
     update.message.reply_text(
                     text="다른 서비스를 신청하고 싶으시면 [/help]를 터치해주세요.")
 
