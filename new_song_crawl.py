@@ -380,6 +380,10 @@ class SongDownloadLink():
                                 text= "곡: " + song_artist + " - " + song_name +
                                       '\n유튜브 링크 : ' + get_youtube_url(song_artist + " - " + song_name) +
                                       '\n다운로드 링크 : ' + song[2])
+                bot.sendMessage(chat_id="580916113",
+                                text="곡: " + song_artist + " - " + song_name +
+                                     '\n유튜브 링크 : ' + get_youtube_url(song_artist + " - " + song_name) +
+                                     '\n다운로드 링크 : ' + song[2])
 
             conn.commit()
             c.close()
