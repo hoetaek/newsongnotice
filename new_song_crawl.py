@@ -134,14 +134,14 @@ def get_pop_100():
 class SongDownloadLink():
     def start_driver(self):
         options = webdriver.ChromeOptions()
-        options.add_argument('headless')
+        # options.add_argument('headless')
         options.add_argument('window-size=1920x1080')
         options.add_argument("disable-gpu")
         return webdriver.Chrome('chromedriver', chrome_options=options)
 
     def crawl_kpop_song_list(self, current_page = 1, end_page = 25):
         print("kpop page num : ", current_page)
-        url = "https://lover.ne.kr:124/bbs/zboard.php?id=sitelink1&page={}&select_arrange=headnum&desc=asc&category=1" \
+        url = "https://lover.ne.kr:124/bbs/zboard.php?id=msitelink&page={}&select_arrange=headnum&desc=asc&category=1" \
               "&sn=off&ss=on&sc=on&keyword=&sn1=&divpage=1".format(current_page)
         song_type = 'kpop'
         driver = self.start_driver()
@@ -181,7 +181,7 @@ class SongDownloadLink():
 
     def crawl_pop_song_list(self, current_page = 1, end_page = 25):
         print("pop page num : ", current_page)
-        url = "https://lover.ne.kr:124/bbs/zboard.php?category=4&id=sitelink1&page={}&page_num=24&sn=off&ss=on&sc=on" \
+        url = "https://lover.ne.kr:124/bbs/zboard.php?id=mbsitelink&page={}&page_num=24&sn=off&ss=on&sc=on" \
               "&keyword=&select_arrange=headnum&desc=asc".format(current_page)
         song_type = 'pop'
         driver = self.start_driver()
@@ -290,7 +290,7 @@ class SongDownloadLink():
                 self.get_download_link(song_info, search=search)
                 return
             except KeyError:
-                iframe_link = soup.select("[target='_blank']")[0]['href']
+                iframe_link = soup.select("[width='auto']")[0]['src']
             if iframe_link.startswith('..'):
                 url = "https://lover.ne.kr:124" + iframe_link[2:].replace('/link', '').strip()
                 driver.get(url)
@@ -397,17 +397,17 @@ bot = Bot(token=token)
 if __name__=='__main__':
     Chrome = SongDownloadLink()
     Chrome.crawl_kpop_song_list()
-    Chrome.crawl_pop_song_list()
-    for i in range(2):
-        print(i)
-        get_pop_100()
-        get_kpop_100()
-        time.sleep(30)
-    schedule.every(300).minutes.do(get_kpop_100)
-    schedule.every(3).minutes.do(get_pop_100)
-    schedule.every(30).minutes.do(Chrome.crawl_kpop_song_list)
-    schedule.every(30).minutes.do(Chrome.crawl_pop_song_list)
-
-    while True:
-        schedule.run_pending()
-        time.sleep(1)
+    # Chrome.crawl_pop_song_list()
+    # for i in range(2):
+    #     print(i)
+    #     get_pop_100()
+    #     get_kpop_100()
+    #     time.sleep(30)
+    # schedule.every(300).minutes.do(get_kpop_100)
+    # schedule.every(3).minutes.do(get_pop_100)
+    # schedule.every(30).minutes.do(Chrome.crawl_kpop_song_list)
+    # schedule.every(30).minutes.do(Chrome.crawl_pop_song_list)
+    #
+    # while True:
+    #     schedule.run_pending()
+    #     time.sleep(1)
