@@ -141,7 +141,7 @@ class SongDownloadLink():
 
     def crawl_kpop_song_list(self, current_page = 1, end_page = 25):
         print("kpop page num : ", current_page)
-        url = "https://lover.ne.kr:124/bbs/zboard.php?id=msitelink&page={}&select_arrange=headnum&desc=asc&category=1" \
+        url = "https://lover.ne.kr:124/bbs/zboard.php?id=sitelink1&page={}&select_arrange=headnum&desc=asc&category=1" \
               "&sn=off&ss=on&sc=on&keyword=&sn1=&divpage=1".format(current_page)
         song_type = 'kpop'
         driver = self.start_driver()
@@ -154,6 +154,8 @@ class SongDownloadLink():
         else:
             soup_songs = soup.select("td[align='left']")
         if not soup_songs:
+            driver.quit()
+            time.sleep(10600)
             self.crawl_kpop_song_list(current_page=current_page, end_page=end_page)
             return
         for i in soup_songs:
@@ -181,7 +183,7 @@ class SongDownloadLink():
 
     def crawl_pop_song_list(self, current_page = 1, end_page = 25):
         print("pop page num : ", current_page)
-        url = "https://lover.ne.kr:124/bbs/zboard.php?id=mbsitelink&page={}&page_num=24&sn=off&ss=on&sc=on" \
+        url = "https://lover.ne.kr:124/bbs/zboard.php?id=sitelink1&page={}&page_num=24&sn=off&ss=on&sc=on" \
               "&keyword=&select_arrange=headnum&desc=asc".format(current_page)
         song_type = 'pop'
         driver = self.start_driver()
@@ -191,6 +193,8 @@ class SongDownloadLink():
         song_info = []
         soup_songs = soup.select("td[align='left']")
         if not soup_songs:
+            driver.quit()
+            time.sleep(10600)
             self.crawl_pop_song_list(current_page=current_page, end_page=end_page)
             return
         for i in soup_songs:
@@ -401,9 +405,8 @@ if __name__=='__main__':
     for i in range(2):
         print(i)
         get_pop_100()
-        get_kpop_100()
-        time.sleep(30)
-    schedule.every(300).minutes.do(get_kpop_100)
+        # get_kpop_100()
+    # schedule.every(300).minutes.do(get_kpop_100)
     schedule.every(3).minutes.do(get_pop_100)
     schedule.every(30).minutes.do(Chrome.crawl_kpop_song_list)
     schedule.every(30).minutes.do(Chrome.crawl_pop_song_list)
