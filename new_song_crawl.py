@@ -324,6 +324,7 @@ class SongDownloadLink():
                 # if song_type == 'kpop':
                 #     file = song_artist + ' - ' + song_name + '.mp3'
             elif iframe_link.startswith("https://mega"):
+                driver.quit()
                 file, err = download_mega_link(iframe_link)
                 download_link = iframe_link
                 if not file :
@@ -346,7 +347,6 @@ class SongDownloadLink():
                         bot.sendMessage(chat_id="580916113",
                                         text="unknow error program exit\n" + str(err))
                         raise SystemExit
-                driver.quit()
                 # if song_type == 'kpop': telegram.error.NetworkError
                 #     file = song_artist + ' - ' + song_name + '.mp3'
             else:
