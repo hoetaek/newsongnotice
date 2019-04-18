@@ -57,11 +57,10 @@ def get_message(bot, update):
             drive_auth = g_auth(bot, update, chat_id)
             if drive_auth:
                 update.message.reply_text(artist + ' ' + song + "을(를) 드라이브에 업로드 중입니다.")
-                link = upload_get_link(drive_auth, file, chat_id)
+                upload_get_link(drive_auth, file, chat_id, permission=False)
                 bot.sendMessage(chat_id=chat_id,
                                 text="곡 : " + artist + ' - ' + song + \
-                                     '\n유튜브 링크 : ' + get_youtube_url(artist + ' - ' + song) + \
-                                     '\n다운로드 링크 : ' + link + "\n\n")
+                                     '\n유튜브 링크 : ' + get_youtube_url(artist + ' - ' + song))
                 update.message.reply_text("다른 서비스를 신청하고 싶으시면 [/help]를 터치해주세요.")
             else:
                 drive_auth = g_auth(bot, update, 'my')
