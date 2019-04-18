@@ -54,7 +54,7 @@ def get_message(bot, update):
             song, artist = ' '.join(keyword).split('/')
             update.message.reply_text(artist + ' ' + song + "을(를) 유튜브에서 다운 받는 중입니다.\n곡이 데이터베이스에 저장되지 않습니다.")
             file = download_youtube_link(song, artist)
-            drive_auth = g_auth(bot, update, "my")
+            drive_auth = g_auth(bot, update, chat_id)
             update.message.reply_text(artist + ' ' + song + "을(를) 드라이브에 업로드 중입니다.")
             link = upload_get_link(drive_auth, file, chat_id)
             bot.sendMessage(chat_id=chat_id,
@@ -1070,7 +1070,7 @@ def startswith(pattern, word):
 
 if __name__=='__main__':
     token = '751248768:AAEJB5JcAh52nWfrSyKTEISGX8_teJIxNFw'
-    # token = "790146878:AAFKnWCnBV9WMSMYPnfcRXukmftgDyV_BlY" #this is a test bot
+    token = "790146878:AAFKnWCnBV9WMSMYPnfcRXukmftgDyV_BlY" #this is a test bot
 
     bot = Bot(token=token)
 
