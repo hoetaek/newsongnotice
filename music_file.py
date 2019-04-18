@@ -115,7 +115,8 @@ def g_auth(bot, update, chat_id):
             if os.path.exists(file_name):
                 with open(file_name, 'r') as f:
                     data = json.load(f)
-                    code = data[chat_id]
+                    if chat_id in data.keys():
+                        code = data[chat_id]
                 os.unlink(file_name)
             times = times + 1
             time.sleep(5)
