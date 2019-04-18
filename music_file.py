@@ -1,12 +1,13 @@
-from pydrive.auth import GoogleAuth
+from pydrive.auth import GoogleAuth, AuthenticationError
 from pydrive.drive import GoogleDrive
 from pytube import YouTube
 import urllib.parse, requests
 from bs4 import BeautifulSoup
+import time
 import itunespy
 import wget
 from subprocess import run, PIPE
-import os, re
+import os, re, json
 from mutagen.id3 import ID3, USLT
 
 def download_mega_link(link):
@@ -41,7 +42,7 @@ def download_youtube_link(song, artist, itunes = True):
         title = artist + ' - ' + song
     print('converting mp4 to mp3')
     music = title + ".mp3"
-    command = ['ffmpeg', '-i', file_name.encode('utf-8'), '-i', cover.encode('utf-8'), '-acodec', 'libmp3lame', '-b:a', '256k', '-c:v', 'copy',
+    command = ['ffmpeg', '-i', file_name.encode('utf-8'), '-i', cover.encode('utf-8'), '-acodec', 'libmp3lame', '-b:a', '192k', '-c:v', 'copy',
                      '-map', '0:a:0', '-map', '1:v:0', music.encode('utf-8')]
     command[11:11] = metadata
     run(command, stdout=PIPE, stderr=PIPE)
@@ -98,13 +99,30 @@ def get_lyrics(song, artist):
     lyrics = '\n'.join([s.text for s in soup.select("[class] span:nth-child(3) .mxm-lyrics__content")])
     return lyrics
 
-def upload_get_link(file_path):
+def g_auth(bot, update, chat_id):
     gauth = GoogleAuth()
     # Try to load saved client credentials
-    gauth.LoadCredentialsFile("mycreds.txt")
+    gauth.LoadCredentialsFile(os.path.join("creds", chat_id + "creds.txt"))
     if gauth.credentials is None:
-        # Authenticate if they're not there
-        gauth.CommandLineAuth()
+        update.message.reply_text("구글 드라이브 접근 권한이 필요합니다.")
+        update.message.reply_text("3분 안에 다음 링크에서 로그인하여 코드를 보내주세요.\n" + gauth.GetAuthUrl())
+        code = ""
+        times = 0
+        time.sleep(20)
+        while len(code) != 57 and times < 30:
+            file_name = 'gauth_code.json'
+            if os.path.exists(file_name):
+                with open(file_name, 'r') as f:
+                    data = json.load(f)
+                    code = data[chat_id]
+                os.unlink(file_name)
+            times = times + 1
+            time.sleep(5)
+        try:
+            gauth.Auth(code)
+        except AuthenticationError:
+            return
+
     elif gauth.access_token_expired:
         # Refresh them if expired
         gauth.Refresh()
@@ -112,17 +130,30 @@ def upload_get_link(file_path):
         # Initialize the saved creds
         gauth.Authorize()
     # Save the current credentials to a file
-    gauth.SaveCredentialsFile("mycreds.txt")
+    gauth.SaveCredentialsFile(os.path.join("creds", chat_id + "creds.txt"))
+    return gauth
+
+def upload_get_link(gauth, file_path, chat_id, permission=True):
     drive = GoogleDrive(gauth)
-    upload_file = drive.CreateFile()
+    folder_id = ''
+    with open('creds/folder_id.json', 'r') as f:
+        data = json.load(f)
+        folder_id = data[chat_id]
+    if folder_id:
+        upload_file = drive.CreateFile({"parents": [{"kind": "drive#fileLink","id": folder_id}]})
+    else:
+        upload_file = drive.CreateFile()
     upload_file.SetContentFile(file_path)
     upload_file.Upload()
-    upload_file.InsertPermission({
-                            'type': 'anyone',
-                            'value': 'anyone',
-                            'role': 'reader'})
     os.unlink(file_path)
-    return upload_file['alternateLink']
+    if permission:
+        upload_file.InsertPermission({
+                                'type': 'anyone',
+                                'value': 'anyone',
+                                'role': 'reader'})
+        return upload_file['alternateLink']
+    else:
+        return
 
 def get_youtube_url(keyword):
     url = 'https://www.youtube.com/results?search_query='+ urllib.parse.quote_plus(keyword)

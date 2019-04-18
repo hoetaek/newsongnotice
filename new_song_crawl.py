@@ -10,7 +10,7 @@ import os
 from telegram import Bot
 from telegram.error import NetworkError
 from make_db import get_user_list, insert_song, is_song
-from music_file import download_mega_link, download_youtube_link, upload_get_link, get_youtube_url
+from music_file import download_mega_link, download_youtube_link, g_auth, upload_get_link, get_youtube_url
 from server import change_ip
 
 def get_kpop_100():
@@ -183,8 +183,8 @@ class SongDownloadLink():
 
     def crawl_pop_song_list(self, current_page = 1, end_page = 25):
         print("pop page num : ", current_page)
-        url = "https://lover.ne.kr:124/bbs/zboard.php?id=sitelink1&page={}&page_num=24&sn=off&ss=on&sc=on" \
-              "&keyword=&select_arrange=headnum&desc=asc".format(current_page)
+        url = "https://lover.ne.kr:124/bbs/zboard.php?category=4&id=sitelink1&page={}&page_num=24&sn=off&ss=on&sc=on&" \
+              "keyword=&select_arrange=headnum&desc=asc".format(current_page)
         song_type = 'pop'
         driver = self.start_driver()
         driver.get(url)
@@ -224,6 +224,7 @@ class SongDownloadLink():
         url = "https://lover.ne.kr:124/bbs/zboard.php?category=1&id=sitelink1&page=1&page_num=24&sn=off&ss=on&sc=on&keyword=&select_arrange=headnum&desc=asc"
         driver = self.start_driver()
         driver.get(url)
+        #TODO something's wrong here
 
         driver.find_element(By.XPATH, "//input[@type='text']").send_keys(keyword)
         driver.find_element(By.XPATH, "//input[@type='image']").click()
@@ -364,7 +365,8 @@ class SongDownloadLink():
 
 
             try:
-                song[2] = upload_get_link(file)
+                drive_auth = g_auth("580916113")
+                song[2] = upload_get_link(drive_auth, file)
             except FileNotFoundError:
                 song[2] = download_link
 
