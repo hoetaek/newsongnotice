@@ -131,6 +131,7 @@ def g_auth(bot, update, chat_id):
     else:
         # Initialize the saved creds
         gauth.Authorize()
+    update.message.reply_text("인증되었습니다.")
     # Save the current credentials to a file
     gauth.SaveCredentialsFile(os.path.join("creds", chat_id + "creds.txt"))
     return gauth
