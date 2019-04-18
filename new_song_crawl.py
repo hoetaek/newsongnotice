@@ -384,15 +384,13 @@ class SongDownloadLink():
                        '\n유튜브 링크 : ' + get_youtube_url(song_artist + " - " + song_name) + \
                        '\n다운로드 링크 : ' + song[2]
             insert_song(c, song_type, song)
+            bot.sendMessage(chat_id="580916113",
+                            text="곡: " + song_artist + " - " + song_name)
             for chat_id in get_user_list(c, song_type, song_artist):
                 bot.sendMessage(chat_id= chat_id, #"580916113",
                                 text= "곡: " + song_artist + " - " + song_name +
                                       '\n유튜브 링크 : ' + get_youtube_url(song_artist + " - " + song_name) +
                                       '\n다운로드 링크 : ' + song[2])
-                bot.sendMessage(chat_id="580916113",
-                                text="곡: " + song_artist + " - " + song_name +
-                                     '\n유튜브 링크 : ' + get_youtube_url(song_artist + " - " + song_name) +
-                                     '\n다운로드 링크 : ' + song[2])
 
             conn.commit()
             c.close()
