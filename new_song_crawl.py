@@ -150,7 +150,7 @@ class SongDownloadLink():
         soup = BeautifulSoup(html_source, 'html.parser')
         song_info = []
         if current_page == 1:
-            soup_songs = soup.select("td[align='left']")[3:]
+            soup_songs = soup.select("td[align='left']")[4:]
         else:
             soup_songs = soup.select("td[align='left']")
         if not soup_songs:
@@ -295,7 +295,10 @@ class SongDownloadLink():
                 self.get_download_link(song_info, search=search)
                 return
             except KeyError:
-                iframe_link = soup.select("[width='auto']")[0]['src']
+                try:
+                    iframe_link = soup.select("[width='auto']")[0]['src']
+                except IndexError:
+                    iframe_link = soup.select("strong > a")[0]['href']
             if iframe_link.startswith('..'):
                 url = "https://lover.ne.kr:124" + iframe_link[2:].replace('/link', '').strip()
                 driver.get(url)
@@ -365,8 +368,8 @@ class SongDownloadLink():
 
 
             try:
-                drive_auth = g_auth("580916113")
-                song[2] = upload_get_link(drive_auth, file)
+                drive_auth = g_auth("my")
+                song[2] = upload_get_link(drive_auth, file, "")
             except FileNotFoundError:
                 song[2] = download_link
 

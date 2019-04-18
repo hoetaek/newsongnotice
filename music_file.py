@@ -100,7 +100,23 @@ def get_lyrics(song, artist):
     lyrics = '\n'.join([s.text for s in soup.select("[class] span:nth-child(3) .mxm-lyrics__content")])
     return lyrics
 
-def g_auth(bot, update, chat_id):
+def g_auth(chat_id):
+    gauth = GoogleAuth()
+    # Try to load saved client credentials
+    gauth.LoadCredentialsFile(os.path.join("creds", chat_id + "creds.txt"))
+    if gauth.credentials is None:
+        gauth.CommandLineAuth()
+    elif gauth.access_token_expired:
+        # Refresh them if expired
+        gauth.Refresh()
+    else:
+        # Initialize the saved creds
+        gauth.Authorize()
+    # Save the current credentials to a file
+    gauth.SaveCredentialsFile(os.path.join("creds", chat_id + "creds.txt"))
+    return gauth
+
+def g_auth_bot(bot, update, chat_id):
     gauth = GoogleAuth()
     # Try to load saved client credentials
     gauth.LoadCredentialsFile(os.path.join("creds", chat_id + "creds.txt"))

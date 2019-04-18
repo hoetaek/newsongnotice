@@ -6,7 +6,7 @@ from pytube.exceptions import RegexMatchError
 import sqlite3, json
 from make_db import insert_user, is_user, insert_song, get_song_list, get_artist_list
 from new_song_crawl import SongDownloadLink, get_youtube_url
-from music_file import g_auth, upload_get_link, download_youtube_link, get_track_data
+from music_file import g_auth_bot, upload_get_link, download_youtube_link, get_track_data
 from telegram.ext.dispatcher import run_async
 from pytube import YouTube
 import os, re, difflib, subprocess, wget
@@ -41,7 +41,7 @@ def get_message(bot, update):
                 return
             update.message.reply_text(artist + ' ' + song + "을(를) 유튜브에서 다운 받는 중입니다.\n곡이 데이터베이스에 저장됩니다.")
             file = download_youtube_link(song, artist)
-            drive_auth = g_auth(bot, update, "my")
+            drive_auth = g_auth_bot(bot, update, "my")
             update.message.reply_text(artist + ' ' + song + "을(를) 드라이브에 업로드 중입니다.")
             link = upload_get_link(drive_auth, file, chat_id)
             insert_song(c, song_type, [song, artist, link])
@@ -55,7 +55,7 @@ def get_message(bot, update):
             song, artist = ' '.join(keyword).split('/')
             update.message.reply_text(artist + ' ' + song + "을(를) 유튜브에서 다운 받는 중입니다.\n곡이 데이터베이스에 저장되지 않습니다.")
             file = download_youtube_link(song, artist)
-            drive_auth = g_auth(bot, update, chat_id)
+            drive_auth = g_auth_bot(bot, update, chat_id)
             if drive_auth:
                 update.message.reply_text(artist + ' ' + song + "을(를) 드라이브에 업로드 중입니다.")
                 upload_get_link(drive_auth, file, chat_id, permission=False)
@@ -64,7 +64,7 @@ def get_message(bot, update):
                                      '\n유튜브 링크 : ' + get_youtube_url(artist + ' - ' + song))
                 update.message.reply_text("다른 서비스를 신청하고 싶으시면 [/help]를 터치해주세요.")
             else:
-                drive_auth = g_auth(bot, update, 'my')
+                drive_auth = g_auth_bot(bot, update, 'my')
                 update.message.reply_text("인증에 실패하셨습니다.")
                 link = upload_get_link(drive_auth, file, chat_id)
                 bot.sendMessage(chat_id=chat_id,
@@ -86,7 +86,7 @@ def get_message(bot, update):
             video_file_name = yt.streams.first().download()
             video_file_name = os.path.basename(video_file_name)
 
-            drive_auth = g_auth(bot, update, chat_id)
+            drive_auth = g_auth_bot(bot, update, chat_id)
             if drive_auth:
                 update.message.reply_text("{}을(를) 음원으로 변환 중입니다.".format(title))
                 if video_file_name.endswith('mp4'):
@@ -107,7 +107,7 @@ def get_message(bot, update):
                     os.unlink(video_file_name)
                     update.message.reply_text("{} 음원 변환에 실패했습니다.\n".format(title))
             else:
-                drive_auth = g_auth(bot, update, 'my')
+                drive_auth = g_auth_bot(bot, update, 'my')
                 update.message.reply_text("인증에 실패하셨습니다.")
                 if video_file_name.endswith('mp4'):
                     music_file_name = video_file_name[:-1] + '3'
@@ -139,14 +139,14 @@ def get_message(bot, update):
             update.message.reply_text("{}을(를) 유튜브에서 다운 받는 중입니다.".format(title))
             video_file_name = yt.streams.first().download()
             video_file_name = os.path.basename(video_file_name)
-            drive_auth = g_auth(bot, update, chat_id)
+            drive_auth = g_auth_bot(bot, update, chat_id)
             if drive_auth:
                 update.message.reply_text("{}을(를) 드라이브에 업로드 중입니다.".format(title))
                 upload_get_link(drive_auth, video_file_name, chat_id, permission=False)
                 update.message.reply_text("{}을(를) 업로드 완료했습니다.\n"
                                           "구글 드라이브에서 확인해주세요.".format(title))
             else:
-                drive_auth = g_auth(bot, update, 'my')
+                drive_auth = g_auth_bot(bot, update, 'my')
                 update.message.reply_text("인증에 실패하셨습니다.")
                 update.message.reply_text("{}을(를) 드라이브에 업로드 중입니다.".format(title))
                 video_drive_link = upload_get_link(drive_auth, video_file_name, chat_id)
@@ -344,21 +344,21 @@ def download_url(bot, update):
         video_file_name = os.path.basename(video_file_name)
 
         if down_type=='동영상':
-            drive_auth = g_auth(bot, update, chat_id)
+            drive_auth = g_auth_bot(bot, update, chat_id)
             if drive_auth:
                 update.callback_query.message.reply_text("{}을(를) 드라이브에 업로드 중입니다.".format(title))
                 upload_get_link(drive_auth, video_file_name, chat_id, permission=False)
                 update.callback_query.message.reply_text("{}을(를) 업로드 완료했습니다.\n"
                                           "구글 드라이브에서 확인해주세요.".format(title))
             else:
-                drive_auth = g_auth(bot, update, 'my')
+                drive_auth = g_auth_bot(bot, update, 'my')
                 update.callback_query.message.reply_text("인증에 실패하셨습니다.")
                 update.callback_query.message.reply_text("{}을(를) 드라이브에 업로드 중입니다.".format(title))
                 video_drive_link = upload_get_link(drive_auth, video_file_name, chat_id)
                 update.callback_query.message.reply_text("{}을(를) 업로드 완료했습니다.\n"
                                                          "동영상 링크 : {}".format(title, video_drive_link))
         else:
-            drive_auth = g_auth(bot, update, chat_id)
+            drive_auth = g_auth_bot(bot, update, chat_id)
             if drive_auth:
                 update.callback_query.message.reply_text("{}을(를) 음원으로 변환 중입니다.".format(title))
                 if video_file_name.endswith('mp4'):
@@ -379,7 +379,7 @@ def download_url(bot, update):
                     os.unlink(video_file_name)
                     update.callback_query.message.reply_text("{} 음원 변환에 실패했습니다.\n".format(title))
             else:
-                drive_auth = g_auth(bot, update, 'my')
+                drive_auth = g_auth_bot(bot, update, 'my')
                 update.callback_query.message.reply_text("인증에 실패하셨습니다.")
                 if video_file_name.endswith('mp4'):
                     music_file_name = video_file_name[:-1] + '3'
@@ -406,7 +406,7 @@ def download_url(bot, update):
 @run_async
 def drive(bot, update):
     chat_id = str(update.message['chat']['id'])
-    gauth = g_auth(bot, update, chat_id)
+    gauth = g_auth_bot(bot, update, chat_id)
     drive = GoogleDrive(gauth)
     folder_list = list_folder(drive, 'root')
     children = list()
@@ -426,7 +426,7 @@ def drive_callback(bot, update):
     data = update.callback_query.data.split(', ')
     folder_idx = int(data[1])
     chat_id = str(update.callback_query.message.chat_id)
-    gauth = g_auth(bot, update, chat_id)
+    gauth = g_auth_bot(bot, update, chat_id)
     drive = GoogleDrive(gauth)
     with open('drive_folder.json', 'r') as f:
         data = json.load(f)
