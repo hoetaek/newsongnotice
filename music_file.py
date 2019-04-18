@@ -74,10 +74,11 @@ def get_track_data(term, index=0, search=False):
         else:
             lyrics = ""
         cover = track.artwork_url_100.replace('100', '500')
-        track_data.append([metadata['artist'] + ' - ' + metadata['title'], cover, metadata, lyrics])
-    if index == 'all':
-        return track_data
-    return track_data[index]
+        if index == 'all':
+            track_data.append([metadata['artist'] + ' - ' + metadata['title'], cover, metadata, lyrics])
+        else:
+            return [metadata['artist'] + ' - ' + metadata['title'], cover, metadata, lyrics]
+    return track_data
 
 def get_lyrics(song, artist):
     pattern = r'\(feat(.*?)\)'
@@ -138,7 +139,8 @@ def upload_get_link(gauth, file_path, chat_id, permission=True):
     folder_id = ''
     with open('creds/folder_id.json', 'r') as f:
         data = json.load(f)
-        folder_id = data[chat_id]
+        if chat_id in data.keys():
+            folder_id = data[chat_id]
     if folder_id:
         upload_file = drive.CreateFile({"parents": [{"kind": "drive#fileLink","id": folder_id}]})
     else:

@@ -104,10 +104,13 @@ venv.bak/
 .mypy_cache/
 
 # pydrive credential
-mycreds.txt
+creds
 
 # chart_info
 latest.json
 
 # user info db
 user_info.db
+
+# for test
+drive_example.py
