@@ -578,7 +578,7 @@ def get_all_artists(bot, update):
     update.message.reply_text(
         "한국 가수는 다음과 같이 있습니다.\n"
     )
-    n = 5
+    n = 10
     chosung_list = sorted(
         list(set(
             [get_chosung(artist[0]) if is_hangul(artist[0]) else artist[0].upper() if artist[0].isalpha() else artist[0]
