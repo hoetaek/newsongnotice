@@ -224,7 +224,6 @@ class SongDownloadLink():
         url = "https://lover.ne.kr:124/bbs/zboard.php?category=1&id=sitelink1&page=1&page_num=24&sn=off&ss=on&sc=on&keyword=&select_arrange=headnum&desc=asc"
         driver = self.start_driver()
         driver.get(url)
-        #TODO something's wrong here
 
         driver.find_element(By.XPATH, "//input[@type='text']").send_keys(keyword)
         driver.find_element(By.XPATH, "//input[@type='image']").click()
@@ -238,6 +237,8 @@ class SongDownloadLink():
             info = i.text.split(' - ')
             artist = info[0].strip()
             song = info[1].strip()
+            if song.endswith('mp3'):
+                song = song.replace('.mp3', '')
             link = "https://lover.ne.kr:124/bbs/" + i.select('a')[0]['href'].rstrip()
             kpop_song_info.append((song_type, [song.replace("'", "''"), artist.replace("'", "''"), link]))
         conn = sqlite3.connect('user_info.db')
