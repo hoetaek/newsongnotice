@@ -4,7 +4,7 @@ from tempfile import NamedTemporaryFile
 from pydrive.drive import GoogleDrive
 from pytube.exceptions import RegexMatchError
 import sqlite3, json
-from make_db import insert_user, is_user, insert_song, get_song_list, get_artist_list
+from make_db import insert_user, is_user, is_artist, insert_song, get_song_list, get_artist_list
 from new_song_crawl import SongDownloadLink, get_youtube_url
 from music_file import g_auth_bot, upload_get_link, download_youtube_link, get_track_data
 from telegram.ext.dispatcher import run_async
@@ -186,12 +186,12 @@ def get_message(bot, update):
                 for song_type in ['kpop', 'pop']:
                     song_infos = get_song_list(c, song_type, artist)
                     if len(song_infos) > 1:
+                        artist_id = is_artist(c, song_type, artist)
                         show_list = [InlineKeyboardButton(song_info[2] + ' - ' + song_info[1],
                                                           callback_data="send, " + song_type + ", " + str(song_info[0]))
                                      for song_info in song_infos] \
                                     + [InlineKeyboardButton('get all',
-                                                            callback_data="send, " + song_type + ", " + "get all, " + str(
-                                                                song_infos[0][0]))]
+                                                            callback_data="send, " + song_type + ", " + "get all, " + str(artist_id))]
                         menu = build_menu(show_list, 1)
                         show_markup = InlineKeyboardMarkup(menu)
                         bot.sendMessage(text="{}이(가) 선택되었습니다.".format(artist),
@@ -1008,8 +1008,9 @@ def search_callback(bot, update):
     c.close()
     conn.close()
     if len(song_infos) > 1:
+        artist_id = is_artist(c, song_type, artist)
         show_list = [InlineKeyboardButton(song_info[2] + ' - ' + song_info[1], callback_data="send, " + song_type + ", " + str(song_info[0])) for song_info in song_infos] \
-                    + [InlineKeyboardButton('get all', callback_data="send, " + song_type + ", " + "get all, " + str(song_infos[0][0]))]
+                    + [InlineKeyboardButton('get all', callback_data="send, " + song_type + ", " + "get all, " + str(artist_id))]
         menu = build_menu(show_list, 1)
         show_markup = InlineKeyboardMarkup(menu)
         bot.edit_message_text(text="{}이(가) 선택되었습니다.".format(artist),
@@ -1052,7 +1053,7 @@ def send_callback(bot, update):
                         text="다시 검색하시려면 [/search]를 터치해주세요."
                              "다른 서비스를 신청하고 싶으시면 [/help]를 터치해주세요.")
     else:
-        c.execute("SELECT artist FROM {}_song WHERE id = {}".format(song_type, song_id))
+        c.execute("SELECT artist FROM {}_artist WHERE id = {}".format(song_type, song_id))
         artist = c.fetchone()[0]
         song_infos = get_song_list(c, song_type, artist)
         bot.edit_message_text(text="{}이(가) 선택되었습니다.".format(artist),
