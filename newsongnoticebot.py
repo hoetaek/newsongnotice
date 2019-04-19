@@ -6,7 +6,7 @@ from pytube.exceptions import RegexMatchError
 import sqlite3, json
 from make_db import insert_user, is_user, is_artist, insert_song, get_song_list, get_artist_list
 from new_song_crawl import SongDownloadLink, get_youtube_url
-from music_file import g_auth_bot, upload_get_link, download_youtube_link, get_track_data
+from music_file import g_auth, g_auth_bot, upload_get_link, download_youtube_link, get_track_data
 from telegram.ext.dispatcher import run_async
 from pytube import YouTube
 import os, re, difflib, subprocess, wget
@@ -41,9 +41,9 @@ def get_message(bot, update):
                 return
             update.message.reply_text(artist + ' ' + song + "을(를) 유튜브에서 다운 받는 중입니다.\n곡이 데이터베이스에 저장됩니다.")
             file = download_youtube_link(song, artist)
-            drive_auth = g_auth_bot(bot, update, "my")
+            drive_auth = g_auth("my")
             update.message.reply_text(artist + ' ' + song + "을(를) 드라이브에 업로드 중입니다.")
-            link = upload_get_link(drive_auth, file, chat_id)
+            link = upload_get_link(drive_auth, file, "")
             insert_song(c, song_type, [song, artist, link])
             bot.sendMessage(chat_id=chat_id,
                             text="곡 : " + artist + ' - ' + song + \
