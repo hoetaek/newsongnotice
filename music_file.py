@@ -138,6 +138,7 @@ def g_auth_bot(bot, update, chat_id):
             time.sleep(5)
         try:
             gauth.Auth(code)
+            update.message.reply_text("인증되었습니다.")
         except AuthenticationError:
             return
 
@@ -147,7 +148,7 @@ def g_auth_bot(bot, update, chat_id):
     else:
         # Initialize the saved creds
         gauth.Authorize()
-    update.message.reply_text("인증되었습니다.")
+
     # Save the current credentials to a file
     gauth.SaveCredentialsFile(os.path.join("creds", chat_id + "creds.txt"))
     return gauth

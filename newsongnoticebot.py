@@ -233,6 +233,20 @@ def get_message(bot, update):
                                      '\n다운로드 링크 : ' + link + "\n\n")
             update.message.reply_text("다른 서비스를 신청하고 싶으시면 [/help]를 터치해주세요.")
 
+    elif text.startswith("업로드"):
+        keyword = text[3:].strip()
+        link = keyword
+        pattern = r'd/[\d\w]*'
+        file_id = re.findall(pattern, link)[0][2:]
+        update.message.reply_text(file_id)
+        gauth = g_auth_bot(bot, update, chat_id)
+        drive = GoogleDrive(gauth)
+        download_file = drive.CreateFile({'id': file_id})
+        tmp_file = download_file['title']
+        update.message.reply_text(tmp_file)
+        download_file.GetContentFile(tmp_file)
+        upload_get_link(gauth, tmp_file, chat_id, permission=False)
+
     conn.commit()
     c.close()
     conn.close()
@@ -1080,7 +1094,7 @@ def startswith(pattern, word):
 
 if __name__=='__main__':
     token = '751248768:AAEJB5JcAh52nWfrSyKTEISGX8_teJIxNFw'
-    # token = "790146878:AAFKnWCnBV9WMSMYPnfcRXukmftgDyV_BlY" #this is a test bot
+    token = "790146878:AAFKnWCnBV9WMSMYPnfcRXukmftgDyV_BlY" #this is a test bot
 
     bot = Bot(token=token)
 
