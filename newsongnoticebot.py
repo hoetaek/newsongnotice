@@ -480,7 +480,8 @@ def drive_selected(bot, update):
         folder_id = data['id']
     os.unlink('drive_folder.json')
     with open('creds/folder_id.json', 'w') as f:
-        json.dump({chat_id: folder_id}, f)
+        data.update({chat_id: folder_id})
+        json.dump(data, f)
     bot.edit_message_text(text="{}가 선택되었습니다.".format(folder_title),
                           chat_id=update.callback_query.message.chat_id,
                           message_id=update.callback_query.message.message_id)
