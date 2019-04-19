@@ -236,8 +236,8 @@ def get_message(bot, update):
     elif text.startswith("업로드"):
         keyword = text[3:].strip()
         link = keyword
-        pattern = r'd/[\d\w]*'
-        file_id = re.findall(pattern, link)[0][2:]
+        pattern = r'(?<=/)[^/]*(?=/)'
+        file_id = re.findall(pattern, link)[-1]
         update.message.reply_text(file_id)
         gauth = g_auth_bot(bot, update, chat_id)
         drive = GoogleDrive(gauth)
