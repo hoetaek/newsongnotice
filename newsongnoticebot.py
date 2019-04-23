@@ -240,12 +240,15 @@ def get_message(bot, update):
         file_id = re.findall(pattern, link)[-1]
         update.message.reply_text(file_id)
         gauth = g_auth_bot(bot, update, chat_id)
-        drive = GoogleDrive(gauth)
-        download_file = drive.CreateFile({'id': file_id})
-        tmp_file = download_file['title']
-        update.message.reply_text(tmp_file)
-        download_file.GetContentFile(tmp_file)
-        upload_get_link(gauth, tmp_file, chat_id, permission=False)
+        if gauth:
+            drive = GoogleDrive(gauth)
+            download_file = drive.CreateFile({'id': file_id})
+            tmp_file = download_file['title']
+            update.message.reply_text(tmp_file)
+            download_file.GetContentFile(tmp_file)
+            upload_get_link(gauth, tmp_file, chat_id, permission=False)
+        else:
+            update.message.reply_text('인증에 실패했습니다.')
 
     conn.commit()
     c.close()
@@ -444,39 +447,42 @@ def drive_callback(bot, update):
     folder_idx = int(data[1])
     chat_id = str(update.callback_query.message.chat_id)
     gauth = g_auth_bot(bot, update, chat_id)
-    drive = GoogleDrive(gauth)
-    with open('drive_folder.json', 'r') as f:
-        data = json.load(f)
-        folder = data['children'][folder_idx]
-        folder_title = folder['title']
-        folder_id = folder['id']
-    folder_list = list_folder(drive, folder_id)
-    children = list()
-    for folder in folder_list:
-        data = {'title': folder['title'],
-                           'id': folder['id']}
-        children.append(data)
-    if children:
-        with open('drive_folder.json', 'w') as f:
-            json.dump({'title':folder_title, 'id':folder_id, 'children':children}, f)
-        titles_show_list = [InlineKeyboardButton(child['title'], callback_data="drive, " + str(i)) for i, child in
-                            enumerate(children)] + [InlineKeyboardButton('선택', callback_data='drsel')]
-        menu = build_menu(titles_show_list, 3)
-        titles_show_markup = InlineKeyboardMarkup(menu)
-        bot.edit_message_text(text="{}가 선택되었습니다.".format(folder_title),
-                              chat_id=update.callback_query.message.chat_id,
-                              message_id=update.callback_query.message.message_id,
-                              reply_markup=titles_show_markup)
-    else:
-        os.unlink('drive_folder.json')
-        with open('creds/folder_id.json', 'r') as f:
+    if gauth:
+        drive = GoogleDrive(gauth)
+        with open('drive_folder.json', 'r') as f:
             data = json.load(f)
-        with open('creds/folder_id.json', 'w') as f:
-            data.update({chat_id:folder_id})
-            json.dump(data, f)
-        bot.edit_message_text(text="{}가 선택되었습니다.".format(folder_title),
-                              chat_id=update.callback_query.message.chat_id,
-                              message_id=update.callback_query.message.message_id)
+            folder = data['children'][folder_idx]
+            folder_title = folder['title']
+            folder_id = folder['id']
+        folder_list = list_folder(drive, folder_id)
+        children = list()
+        for folder in folder_list:
+            data = {'title': folder['title'],
+                               'id': folder['id']}
+            children.append(data)
+        if children:
+            with open('drive_folder.json', 'w') as f:
+                json.dump({'title':folder_title, 'id':folder_id, 'children':children}, f)
+            titles_show_list = [InlineKeyboardButton(child['title'], callback_data="drive, " + str(i)) for i, child in
+                                enumerate(children)] + [InlineKeyboardButton('선택', callback_data='drsel')]
+            menu = build_menu(titles_show_list, 3)
+            titles_show_markup = InlineKeyboardMarkup(menu)
+            bot.edit_message_text(text="{}가 선택되었습니다.".format(folder_title),
+                                  chat_id=update.callback_query.message.chat_id,
+                                  message_id=update.callback_query.message.message_id,
+                                  reply_markup=titles_show_markup)
+        else:
+            os.unlink('drive_folder.json')
+            with open('creds/folder_id.json', 'r') as f:
+                data = json.load(f)
+            with open('creds/folder_id.json', 'w') as f:
+                data.update({chat_id:folder_id})
+                json.dump(data, f)
+            bot.edit_message_text(text="{}가 선택되었습니다.".format(folder_title),
+                                  chat_id=update.callback_query.message.chat_id,
+                                  message_id=update.callback_query.message.message_id)
+    else:
+        update.message.reply_text("인증에 실패했습니다.")
 
 def drive_selected(bot, update):
     chat_id = str(update.callback_query.message.chat_id)
