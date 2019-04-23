@@ -421,19 +421,22 @@ def download_url(bot, update):
 def drive(bot, update):
     chat_id = str(update.message['chat']['id'])
     gauth = g_auth_bot(bot, update, chat_id)
-    drive = GoogleDrive(gauth)
-    folder_list = list_folder(drive, 'root')
-    children = list()
-    for folder in folder_list:
-        data = {'title': folder['title'],
-                'id': folder['id']}
-        children.append(data)
-    with open('drive_folder.json', 'w') as f:
-        json.dump({'title':'root', 'id':None, 'children':children}, f)
-    titles_show_list = [InlineKeyboardButton(child['title'], callback_data="drive, " + str(i)) for i, child in enumerate(children)]
-    menu = build_menu(titles_show_list, 3)
-    titles_show_markup = InlineKeyboardMarkup(menu)
-    update.message.reply_text("어느 폴더에 업로드할 지 선택해주세요.\n", reply_markup=titles_show_markup)
+    if gauth:
+        drive = GoogleDrive(gauth)
+        folder_list = list_folder(drive, 'root')
+        children = list()
+        for folder in folder_list:
+            data = {'title': folder['title'],
+                    'id': folder['id']}
+            children.append(data)
+        with open('drive_folder.json', 'w') as f:
+            json.dump({'title':'root', 'id':None, 'children':children}, f)
+        titles_show_list = [InlineKeyboardButton(child['title'], callback_data="drive, " + str(i)) for i, child in enumerate(children)]
+        menu = build_menu(titles_show_list, 3)
+        titles_show_markup = InlineKeyboardMarkup(menu)
+        update.message.reply_text("어느 폴더에 업로드할 지 선택해주세요.\n", reply_markup=titles_show_markup)
+    else:
+        update.message.reply_text("인증에 실패하셨습니다")
 
 @run_async
 def drive_callback(bot, update):
