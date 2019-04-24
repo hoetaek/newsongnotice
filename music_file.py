@@ -41,7 +41,7 @@ def download_youtube_link(song, artist, itunes = True):
     if itunes == False:
         title = artist + ' - ' + song
     print('converting mp4 to mp3')
-    music = title + ".mp3"
+    music = title.replace("/", "") + ".mp3"
     command = ['ffmpeg', '-i', file_name.encode('utf-8'), '-i', cover.encode('utf-8'), '-acodec', 'libmp3lame', '-b:a', '192k', '-c:v', 'copy',
                      '-map', '0:a:0', '-map', '1:v:0', music.encode('utf-8')]
     command[11:11] = metadata
