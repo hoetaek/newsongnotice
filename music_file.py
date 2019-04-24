@@ -116,7 +116,7 @@ def g_auth(chat_id):
     gauth.SaveCredentialsFile(os.path.join("creds", chat_id + "creds.txt"))
     return gauth
 
-def g_auth_bot(bot, update, chat_id):
+def g_auth_bot(update, chat_id):
     gauth = GoogleAuth()
     # Try to load saved client credentials
     gauth.LoadCredentialsFile(os.path.join("creds", chat_id + "creds.txt"))
