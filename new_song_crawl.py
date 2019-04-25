@@ -307,7 +307,11 @@ class SongDownloadLink():
                 driver.quit()
                 soup = BeautifulSoup(html_source, 'html.parser')
                 download_soup = soup.select("script[type='text/javascript']")[-1]
-                download_link = re.findall('https://.*"', str(download_soup))[0][:-1]
+                try:
+                    download_link = re.findall('https://[^\"]*', str(download_soup))[0]
+                except IndexError:
+                    download_soup = soup.select("body > div > center:nth-child(13) > script:nth-child(2)")[0]
+                    download_link = re.findall('https://[^\"]*', str(download_soup))[0]
                 file, err = download_mega_link(download_link)
                 if not file :
                     if err.endswith("Can't determine download url"):
@@ -405,16 +409,16 @@ bot = Bot(token=token)
 if __name__=='__main__':
     Chrome = SongDownloadLink()
     Chrome.crawl_kpop_song_list()
-    Chrome.crawl_pop_song_list()
-    for i in range(2):
-        print(i)
-        get_pop_100()
-        # get_kpop_100()
-    # schedule.every(300).minutes.do(get_kpop_100)
-    schedule.every(3).minutes.do(get_pop_100)
-    schedule.every(30).minutes.do(Chrome.crawl_kpop_song_list)
-    schedule.every(30).minutes.do(Chrome.crawl_pop_song_list)
-
-    while True:
-        schedule.run_pending()
-        time.sleep(1)
+    # Chrome.crawl_pop_song_list()
+    # for i in range(2):
+    #     print(i)
+    #     get_pop_100()
+    #     # get_kpop_100()
+    # # schedule.every(300).minutes.do(get_kpop_100)
+    # schedule.every(3).minutes.do(get_pop_100)
+    # schedule.every(30).minutes.do(Chrome.crawl_kpop_song_list)
+    # schedule.every(30).minutes.do(Chrome.crawl_pop_song_list)
+    #
+    # while True:
+    #     schedule.run_pending()
+    #     time.sleep(1)
