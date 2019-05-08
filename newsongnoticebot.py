@@ -169,7 +169,7 @@ def get_message(bot, update):
                         reply_markup=show_markup)
 
     elif text.startswith("itunes"):
-        keyword = text[4:].strip()
+        keyword = text[7:].strip()
         track_data = get_track_data(keyword, index='all', search=True)
         if track_data:
             titles = [i[0] for i in track_data]
@@ -187,7 +187,7 @@ def get_message(bot, update):
         keyword = text[4:].strip()
         track_data = get_track_data(keyword, index='all', search=True)
         if track_data:
-            titles = [i[0] for i in get_track_data(keyword, index='all', search=True)]
+            titles = [i[0] for i in track_data]
             update.message.reply_text("다음과 같은 결과가 있습니다.\n" + '\n'.join(titles))
         else:
             update.message.reply_text("검색 결과가 존재하지 않습니다.ㅠㅠㅠ\n"
