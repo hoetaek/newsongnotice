@@ -184,7 +184,7 @@ def get_message(bot, update):
                                       "다른 서비스를 신청하고 싶으시면 [/help]를 터치해주세요.")
 
     elif text.startswith("찾아"):
-        keyword = text[4:].strip()
+        keyword = text[3:].strip()
         track_data = get_track_data(keyword, index='all', search=True)
         if track_data:
             titles = [i[0] for i in track_data]
