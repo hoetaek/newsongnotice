@@ -69,16 +69,13 @@ def get_track_data(term, index=0, search=False):
     for i, track in enumerate(tracks):
         metadata = {"title":track.track_name, "album":track.collection_name, "artist":track.artist_name, "genre":track.primary_genre_name,
                     "TYER":track.release_date, "Track":track.track_number, "disc":track.disc_number}
-        if search == False:
-            lyrics = get_lyrics(metadata['title'], metadata['artist'])
-        else:
-            lyrics = ""
+        lyrics = ""
         cover = track.artwork_url_100.replace('100', '500')
         if index == 'all':
             track_data.append([metadata['artist'] + ' - ' + metadata['title'], cover, metadata, lyrics])
         elif index == i:
-            return [metadata['artist'] + ' - ' + metadata['title'], cover, metadata, lyrics]
-        else:
+            if search == False:
+                lyrics = get_lyrics(metadata['title'], metadata['artist'])
             return [metadata['artist'] + ' - ' + metadata['title'], cover, metadata, lyrics]
     return track_data
 
@@ -204,7 +201,8 @@ if __name__=='__main__':
     # mega_output = download_mega_link("https://mega.nz/#!3iZCxKIS!8LhjRrLOPBcJT892x3sS8UNBZ2JTYPI1fPtD-Lss7p0")
     # if mega_output[1].endswith("Can't determine download url"):
     #     print("True")
-    download_youtube_link('꽃 길', '빅뱅')
+    i = 5
+    print(get_track_data("박효신", index=i))
     # [print(m) for m in mega_output]
     # conn = sqlite3.connect("user_info.db")
     # c = conn.cursor()
