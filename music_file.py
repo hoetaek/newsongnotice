@@ -66,7 +66,7 @@ def get_track_data(term, index=0, search=False):
         print("connection error")
         return get_track_data(term, index=index, search=search)
     track_data = []
-    for track in tracks:
+    for i, track in enumerate(tracks):
         metadata = {"title":track.track_name, "album":track.collection_name, "artist":track.artist_name, "genre":track.primary_genre_name,
                     "TYER":track.release_date, "Track":track.track_number, "disc":track.disc_number}
         if search == False:
@@ -76,6 +76,8 @@ def get_track_data(term, index=0, search=False):
         cover = track.artwork_url_100.replace('100', '500')
         if index == 'all':
             track_data.append([metadata['artist'] + ' - ' + metadata['title'], cover, metadata, lyrics])
+        elif index == i:
+            return [metadata['artist'] + ' - ' + metadata['title'], cover, metadata, lyrics]
         else:
             return [metadata['artist'] + ' - ' + metadata['title'], cover, metadata, lyrics]
     return track_data
@@ -176,16 +178,23 @@ def upload_get_link(gauth, file_path, chat_id, permission=True):
     else:
         return
 
-def get_youtube_url(keyword):
+def get_youtube_url(keyword, one=True):
     url = 'https://www.youtube.com/results?search_query='+ urllib.parse.quote_plus(keyword)
     response = requests.get(url)
     html = response.text
     soup = BeautifulSoup(html, 'html.parser')
 
-    for link in soup.findAll('a', {'class': 'yt-uix-tile-link'}):
+    urls = list()
+    for i, link in enumerate(soup.findAll('a', {'class': 'yt-uix-tile-link'})):
         if link.get('href').startswith('/watch'):
-            return 'https://www.youtube.com' + link.get('href')
-    return "no youtube link"
+            if one:
+                return 'https://www.youtube.com' + link.get('href')
+            else:
+                if i < 5:
+                    urls.append('https://www.youtube.com' + link.get('href'))
+                else:
+                    return urls
+    return urls if urls else "no youtube link"
 
 if __name__=='__main__':
     # download_youtube_link("Always Remember Us This Way", "Lady GaGa")
