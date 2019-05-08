@@ -168,7 +168,7 @@ def get_message(bot, update):
                         chat_id=chat_id,
                         reply_markup=show_markup)
 
-    elif text.startswith("아이튠즈"):
+    elif text.startswith("itunes"):
         keyword = text[4:].strip()
         track_data = get_track_data(keyword, index='all', search=True)
         if track_data:
