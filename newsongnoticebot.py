@@ -444,7 +444,7 @@ def download_url(bot, update):
 def itunes_callback(bot, update):
     chat_id = str(update.callback_query.message.chat_id)
     data = update.callback_query.data.split(', ')
-    idx = data[1]
+    idx = int(data[1])
     keyword = data[2]
     track_data = get_track_data(keyword, index=idx)
     title, cover, metadata, lyrics = track_data
