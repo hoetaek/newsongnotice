@@ -131,7 +131,6 @@ def get_message(bot, update):
 
         else:
             keyword = ' '.join(keyword).strip()
-            update.message.reply_text("{}을(를) 유튜브에서 검색중입니다.".format(keyword))
             if keyword.startswith('http'):
                 link = keyword
                 yt = YouTube(link)
@@ -153,7 +152,16 @@ def get_message(bot, update):
                     update.message.reply_text("{}을(를) 업로드 완료했습니다.\n"
                                               "동영상 링크 : {}".format(title, video_drive_link))
             else:
-                links = get_youtube_url(keyword, one=False)
+                limit = 5
+                if keyword.startswith('#'):
+                    keyword = keyword.split()
+                    try:
+                        limit = int(keyword[0][1:])
+                        keyword = ' '.join(keyword[1:])
+                    except ValueError:
+                        keyword = ' '.join(keyword[1:])
+                update.message.reply_text("{}을(를) 유튜브에서 검색중입니다.".format(keyword))
+                links = get_youtube_url(keyword, limit=limit)
                 for link in links:
                     bot.sendMessage(text=link,
                                     chat_id=chat_id)

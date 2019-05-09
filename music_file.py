@@ -70,7 +70,7 @@ def get_track_data(term, index=0, search=False):
         metadata = {"title":track.track_name, "album":track.collection_name, "artist":track.artist_name, "genre":track.primary_genre_name,
                     "TYER":track.release_date, "Track":track.track_number, "disc":track.disc_number}
         lyrics = ""
-        cover = track.artwork_url_100.replace('100', '500')
+        cover = track.artwork_url_100
         if index == 'all':
             track_data.append([metadata['artist'] + ' - ' + metadata['title'], cover, metadata, lyrics])
         elif index == i:
@@ -175,22 +175,23 @@ def upload_get_link(gauth, file_path, chat_id, permission=True):
     else:
         return
 
-def get_youtube_url(keyword, one=True):
+def get_youtube_url(keyword, limit=1):
     url = 'https://www.youtube.com/results?search_query='+ urllib.parse.quote_plus(keyword)
     response = requests.get(url)
     html = response.text
     soup = BeautifulSoup(html, 'html.parser')
 
     urls = list()
-    for i, link in enumerate(soup.findAll('a', {'class': 'yt-uix-tile-link'})):
+    i = 0
+    for link in soup.findAll('a', {'class': 'yt-uix-tile-link'}):
         if link.get('href').startswith('/watch'):
-            if one:
+            if limit==1:
                 return 'https://www.youtube.com' + link.get('href')
+            elif i < limit:
+                urls.append('https://www.youtube.com' + link.get('href'))
             else:
-                if i < 5:
-                    urls.append('https://www.youtube.com' + link.get('href'))
-                else:
-                    return urls
+                return urls
+            i += 1
     return urls if urls else "no youtube link"
 
 if __name__=='__main__':
