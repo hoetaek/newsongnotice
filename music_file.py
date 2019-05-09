@@ -71,13 +71,14 @@ def get_track_data(term, index=0, search=False):
                     "TYER":track.release_date, "Track":track.track_number, "disc":track.disc_number}
         lyrics = ""
         cover = track.artwork_url_100.replace("100", "500")
-        if requests.get(cover).status_code != 200:
-            cover = cover.replace("500", "100")
+
         if index == 'all':
             track_data.append([metadata['artist'] + ' - ' + metadata['title'], cover, metadata, lyrics])
         elif index == i:
             if search == False:
                 lyrics = get_lyrics(metadata['title'], metadata['artist'])
+            if requests.get(cover).status_code != 200:
+                cover = cover.replace("500", "100")
             return [metadata['artist'] + ' - ' + metadata['title'], cover, metadata, lyrics]
     return track_data
 
