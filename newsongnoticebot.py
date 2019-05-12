@@ -166,7 +166,7 @@ def get_message(bot, update):
                     bot.sendMessage(text=link,
                                     chat_id=chat_id)
 
-    elif text.startswith("http"):
+    elif text.startswith("https://www.you"):
         link = text
         show_list = [InlineKeyboardButton("동영상", callback_data="url, 동영상, " + link), InlineKeyboardButton("음원",
                                             callback_data="url, 음원, " + link)]
@@ -175,6 +175,22 @@ def get_message(bot, update):
         bot.sendMessage(text="동영상 또는 음원을 골라주세요.",
                         chat_id=chat_id,
                         reply_markup=show_markup)
+
+    elif text.startswith("https://drive"):
+        link = text
+        pattern = r'(?<=/)[^/]*(?=/)'
+        file_id = re.findall(pattern, link)[-1]
+        update.message.reply_text(file_id)
+        gauth = g_auth_bot(update, chat_id)
+        if gauth:
+            drive = GoogleDrive(gauth)
+            download_file = drive.CreateFile({'id': file_id})
+            tmp_file = download_file['title']
+            update.message.reply_text(tmp_file)
+            download_file.GetContentFile(tmp_file)
+            upload_get_link(gauth, tmp_file, chat_id, permission=False)
+        else:
+            update.message.reply_text('인증에 실패했습니다.')
 
     elif text.startswith("itunes"):
         keyword = text[7:].strip()
@@ -260,23 +276,6 @@ def get_message(bot, update):
                                      '\n유튜브 링크 : ' + get_youtube_url(artist + ' - ' + song) + \
                                      '\n다운로드 링크 : ' + link + "\n\n")
             update.message.reply_text("다른 서비스를 신청하고 싶으시면 [/help]를 터치해주세요.")
-
-    elif text.startswith("업로드"):
-        keyword = text[3:].strip()
-        link = keyword
-        pattern = r'(?<=/)[^/]*(?=/)'
-        file_id = re.findall(pattern, link)[-1]
-        update.message.reply_text(file_id)
-        gauth = g_auth_bot(update, chat_id)
-        if gauth:
-            drive = GoogleDrive(gauth)
-            download_file = drive.CreateFile({'id': file_id})
-            tmp_file = download_file['title']
-            update.message.reply_text(tmp_file)
-            download_file.GetContentFile(tmp_file)
-            upload_get_link(gauth, tmp_file, chat_id, permission=False)
-        else:
-            update.message.reply_text('인증에 실패했습니다.')
 
     conn.commit()
     c.close()
