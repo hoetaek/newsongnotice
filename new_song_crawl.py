@@ -310,8 +310,11 @@ class SongDownloadLink():
                 try:
                     download_link = re.findall('https://[^\"]*', str(download_soup))[0]
                 except IndexError:
-                    download_soup = soup.select("body > div > center:nth-child(13) > script:nth-child(2)")[0]
-                    download_link = re.findall('https://[^\"]*', str(download_soup))[0]
+                    try:
+                        download_soup = soup.select("body > div > center:nth-child(13) > script:nth-child(2)")[0]
+                        download_link = re.findall('https://[^\"]*', str(download_soup))[0]
+                    except IndexError:
+                        download_link = soup.select("#sex > a")[0]['href']
                 file, err = download_mega_link(download_link)
                 if not file :
                     if err.endswith("Can't determine download url"):
