@@ -3,6 +3,7 @@ from bs4 import BeautifulSoup
 from new_data_manager import NewNotice
 from telegram import Bot
 import schedule, time
+import re
 
 cookies = {
     'WMONID': 'z0ZIgcdEDfv',
@@ -52,17 +53,45 @@ def check_police_update():
             bot = Bot(token=token)
             messages = []
             for message, link in new_notice:
-                messages.append("<a href=\"{}\">{}</a>".format(link, message))
+                messages.append("<a href=\"{}\">{}</a>".format(link, message.replace("<", "").replace(">", "")))
             bot.send_message(chat_id=chat_id,
                              parse_mode="HTML",
                              text ="의경 관련 새로운 공지가 있습니다.\n\n" +
                                    "\n".join(messages))
 
+def check_snue_update():
+    response = requests.post("http://portal.snue.ac.kr/enview/board/list.brd?boardId=graduate_notice")
+    html = response.text
+    soup = BeautifulSoup(html, 'html.parser')
+    notice_title = [i.text.strip() for i in soup.select("td.td2")]
+    url = "http://portal.snue.ac.kr/enview/board/read.brd?boardId=graduate_notice&bltnNo={}&cmpBrdId=graduate_notice&cmd=READ"
+    links = [url.format(re.search('\d+', i['onclick']).group()) for i in soup.select("tr.board-item")]
+    notices = [[i, j] for i, j in zip(notice_title, links)]
+
+    snue_notice = NewNotice('others.json')
+    new_notice = snue_notice.compare_data("snue_notice", notices)
+    snue_notice.save_data()
+    if new_notice:
+        chat_ids = [580916113, 659233833]
+        for chat_id in chat_ids:
+            token = '751248768:AAEJB5JcAh52nWfrSyKTEISGX8_teJIxNFw'
+            bot = Bot(token=token)
+            messages = []
+            for message, link in new_notice:
+                messages.append("<a href=\"{}\"> {} </a>".format(link, message.replace("<", "").replace(">", "")))
+            bot.send_message(chat_id=chat_id,
+                             parse_mode="HTML",
+                             text="서울교대 새로운 학사공지가 있습니다.\n\n" +
+                                  "\n".join(messages))
+
+
 if __name__=='__main__':
     check_police_update()
+    check_snue_update()
+
     schedule.every(3).hours.do(check_police_update)
+    schedule.every(3).hours.do(check_snue_update)
 
     while True:
         schedule.run_pending()
         time.sleep(1)
-
