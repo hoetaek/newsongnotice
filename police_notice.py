@@ -39,7 +39,9 @@ def check_police_update():
     response = requests.post('https://ap.police.go.kr/ap/bbs/list.do', headers=headers, params=params, cookies=cookies, data=data)
     html = response.text
     soup = BeautifulSoup(html, 'html.parser')
-    notices = [a.text for a in soup.select("td.tl > a")]
+    notice_title = [a.text for a in soup.select("td.tl > a")]
+    links = ["https://ap.police.go.kr" + a['href'] for a in soup.select("td.tl > a")]
+    notices = [[i, j] for i, j in zip(notice_title, links)]
     police_notice = NewNotice('others.json')
     new_notice = police_notice.compare_data("police_notice", notices)
     police_notice.save_data()
@@ -48,9 +50,13 @@ def check_police_update():
         for chat_id in chat_ids:
             token = '751248768:AAEJB5JcAh52nWfrSyKTEISGX8_teJIxNFw'
             bot = Bot(token=token)
+            messages = []
+            for message, link in new_notice:
+                messages.append("<a href=\"{}\">{}</a>".format(link, message))
             bot.send_message(chat_id=chat_id,
-                             text ="의경 관련 새로운 공지가 있습니다.\n\n{}".format('\n'.join(new_notice)))
-
+                             parse_mode="HTML",
+                             text ="의경 관련 새로운 공지가 있습니다.\n\n" +
+                                   "\n".join(messages))
 
 if __name__=='__main__':
     check_police_update()
