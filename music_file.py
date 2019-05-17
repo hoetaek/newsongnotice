@@ -122,34 +122,65 @@ def g_auth_bot(update, chat_id):
     gauth = GoogleAuth()
     # Try to load saved client credentials
     gauth.LoadCredentialsFile(os.path.join("creds", chat_id + "creds.txt"))
-    if gauth.credentials is None:
-        update.message.reply_text("구글 드라이브 접근 권한이 필요합니다.")
-        update.message.reply_text("3분 안에 다음 링크에서 로그인하여 코드를 보내주세요.\n" + gauth.GetAuthUrl())
-        code = ""
-        times = 0
-        time.sleep(20)
-        while len(code) != 57 and times < 30:
-            file_name = 'gauth_code.json'
-            if os.path.exists(file_name):
-                with open(file_name, 'r') as f:
-                    data = json.load(f)
-                    if chat_id in data.keys():
-                        code = data[chat_id]
-                os.unlink(file_name)
-            times = times + 1
-            time.sleep(5)
-        try:
-            gauth.Auth(code)
-            update.message.reply_text("인증되었습니다.")
-        except AuthenticationError:
-            return
+    try:
+        if gauth.credentials is None:
+            update.message.reply_text("구글 드라이브 접근 권한이 필요합니다.")
+            update.message.reply_text("3분 안에 다음 링크에서 로그인하여 코드를 보내주세요.\n" + gauth.GetAuthUrl())
+            code = ""
+            times = 0
+            time.sleep(20)
+            while len(code) != 57 and times < 30:
+                file_name = 'gauth_code.json'
+                if os.path.exists(file_name):
+                    with open(file_name, 'r') as f:
+                        data = json.load(f)
+                        if chat_id in data.keys():
+                            code = data[chat_id]
+                    os.unlink(file_name)
+                times = times + 1
+                time.sleep(5)
+            try:
+                gauth.Auth(code)
+                update.message.reply_text("인증되었습니다.")
+            except AuthenticationError:
+                return
 
-    elif gauth.access_token_expired:
-        # Refresh them if expired
-        gauth.Refresh()
-    else:
-        # Initialize the saved creds
-        gauth.Authorize()
+        elif gauth.access_token_expired:
+            # Refresh them if expired
+            gauth.Refresh()
+        else:
+            # Initialize the saved creds
+            gauth.Authorize()
+    except Exception as e:
+        print(e)
+        if gauth.credentials is None:
+            update.callback_query.message.reply_text("구글 드라이브 접근 권한이 필요합니다.")
+            update.callback_query.message.reply_text("3분 안에 다음 링크에서 로그인하여 코드를 보내주세요.\n" + gauth.GetAuthUrl())
+            code = ""
+            times = 0
+            time.sleep(20)
+            while len(code) != 57 and times < 30:
+                file_name = 'gauth_code.json'
+                if os.path.exists(file_name):
+                    with open(file_name, 'r') as f:
+                        data = json.load(f)
+                        if chat_id in data.keys():
+                            code = data[chat_id]
+                    os.unlink(file_name)
+                times = times + 1
+                time.sleep(5)
+            try:
+                gauth.Auth(code)
+                update.callback_query.message.reply_text("인증되었습니다.")
+            except AuthenticationError:
+                return
+
+        elif gauth.access_token_expired:
+            # Refresh them if expired
+            gauth.Refresh()
+        else:
+            # Initialize the saved creds
+            gauth.Authorize()
 
     # Save the current credentials to a file
     gauth.SaveCredentialsFile(os.path.join("creds", chat_id + "creds.txt"))
