@@ -193,7 +193,7 @@ def get_message(bot, update):
             update.message.reply_text('인증에 실패했습니다.')
 
     elif text.lower().startswith("itunes") or text.startswith("아이튠즈"):
-        keyword = text[7:].strip()
+        keyword = text.replace("itunes", "").replace("아이튠즈", "")
         track_data = get_track_data(keyword, index='all', search=True)
         if track_data:
             titles = [i[0] for i in track_data]

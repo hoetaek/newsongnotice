@@ -151,8 +151,7 @@ def g_auth_bot(update, chat_id):
         else:
             # Initialize the saved creds
             gauth.Authorize()
-    except Exception as e:
-        print(e)
+    except:
         if gauth.credentials is None:
             update.callback_query.message.reply_text("구글 드라이브 접근 권한이 필요합니다.")
             update.callback_query.message.reply_text("3분 안에 다음 링크에서 로그인하여 코드를 보내주세요.\n" + gauth.GetAuthUrl())
