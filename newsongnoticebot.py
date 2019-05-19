@@ -502,6 +502,14 @@ def itunes_callback(bot, update):
                                                  "음원 링크 : {}".format(title, music_drive_link))
 
 @run_async
+def auth(bot, update):
+    chat_id = str(update.message['chat']['id'])
+    file = os.path.join("creds", chat_id + "creds.txt")
+    if os.path.exists(file):
+        os.unlink(file)
+    g_auth_bot(update, chat_id)
+
+@run_async
 def drive(bot, update):
     chat_id = str(update.message['chat']['id'])
     gauth = g_auth_bot(update, chat_id)
@@ -1201,6 +1209,7 @@ if __name__=='__main__':
     updater.dispatcher.add_handler(CommandHandler('start', start))
     updater.dispatcher.add_handler(CommandHandler('stop', stop))
     updater.dispatcher.add_handler(CommandHandler('help', help))
+    updater.dispatcher.add_handler(CommandHandler('auth', auth))
     updater.dispatcher.add_handler(CommandHandler('drive', drive))
     updater.dispatcher.add_handler(CommandHandler('command', command))
     updater.dispatcher.add_handler(CommandHandler('all_artists', get_all_artists))
