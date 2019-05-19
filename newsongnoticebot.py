@@ -567,7 +567,7 @@ def drive_callback(bot, update):
             with open('drive_folder.json', 'w') as f:
                 json.dump({'title':folder_title, 'id':folder_id, 'children':children}, f)
             titles_show_list = [InlineKeyboardButton(child['title'], callback_data="drive, " + str(i)) for i, child in
-                                enumerate(children)] + [[InlineKeyboardButton('선택', callback_data='drsel')]]
+                                enumerate(children)]
             menu = build_menu(titles_show_list, 3) + [[InlineKeyboardButton('선택', callback_data='drsel')]]
             titles_show_markup = InlineKeyboardMarkup(menu)
             bot.edit_message_text(text="{}가 선택되었습니다.".format(folder_title),
