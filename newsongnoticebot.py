@@ -525,9 +525,8 @@ def drive(bot, update):
             children.append(data)
         with open('drive_folder.json', 'w') as f:
             json.dump({'title':'root', 'id':None, 'children':children}, f)
-        titles_show_list = [InlineKeyboardButton(child['title'], callback_data="drive, " + str(i)) for i, child in enumerate(children)] + \
-                           [InlineKeyboardButton("선택", callback_data="drive, " + "선택")]
-        menu = build_menu(titles_show_list, 3)
+        titles_show_list = [InlineKeyboardButton(child['title'], callback_data="drive, " + str(i)) for i, child in enumerate(children)]
+        menu = build_menu(titles_show_list, 3) + [[InlineKeyboardButton("선택", callback_data="drive, " + "선택")]]
         titles_show_markup = InlineKeyboardMarkup(menu)
         update.message.reply_text("어느 폴더에 업로드할 지 선택해주세요.\n", reply_markup=titles_show_markup)
     else:
@@ -568,8 +567,8 @@ def drive_callback(bot, update):
             with open('drive_folder.json', 'w') as f:
                 json.dump({'title':folder_title, 'id':folder_id, 'children':children}, f)
             titles_show_list = [InlineKeyboardButton(child['title'], callback_data="drive, " + str(i)) for i, child in
-                                enumerate(children)] + [InlineKeyboardButton('선택', callback_data='drsel')]
-            menu = build_menu(titles_show_list, 3)
+                                enumerate(children)] + [[InlineKeyboardButton('선택', callback_data='drsel')]]
+            menu = build_menu(titles_show_list, 3) + [[InlineKeyboardButton('선택', callback_data='drsel')]]
             titles_show_markup = InlineKeyboardMarkup(menu)
             bot.edit_message_text(text="{}가 선택되었습니다.".format(folder_title),
                                   chat_id=update.callback_query.message.chat_id,
