@@ -546,7 +546,9 @@ def drive_callback(bot, update):
         with open('creds/folder_id.json', 'w') as f:
             data.pop(chat_id, None)
             json.dump(data, f)
-        bot.edit_message_text(text="기본 폴더가 선택되었습니다.")
+        bot.edit_message_text(text="기본 폴더가 선택되었습니다.",
+                              chat_id=update.callback_query.message.chat_id,
+                              message_id=update.callback_query.message.message_id)
         return
     gauth = g_auth_bot(update, chat_id)
     if gauth:
