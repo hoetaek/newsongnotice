@@ -516,6 +516,8 @@ def drive(bot, update):
     if gauth:
         drive = GoogleDrive(gauth)
         folder_list = list_folder(drive, 'root')
+        if not folder_list:
+            update.message.reply_text("폴더가 존재하지 않습니다.")
         children = list()
         for folder in folder_list:
             data = {'title': folder['title'],
@@ -523,7 +525,8 @@ def drive(bot, update):
             children.append(data)
         with open('drive_folder.json', 'w') as f:
             json.dump({'title':'root', 'id':None, 'children':children}, f)
-        titles_show_list = [InlineKeyboardButton(child['title'], callback_data="drive, " + str(i)) for i, child in enumerate(children)]
+        titles_show_list = [InlineKeyboardButton(child['title'], callback_data="drive, " + str(i)) for i, child in enumerate(children)] + \
+                           [InlineKeyboardButton("선택", callback_data="drive, " + "선택")]
         menu = build_menu(titles_show_list, 3)
         titles_show_markup = InlineKeyboardMarkup(menu)
         update.message.reply_text("어느 폴더에 업로드할 지 선택해주세요.\n", reply_markup=titles_show_markup)
@@ -532,9 +535,19 @@ def drive(bot, update):
 
 @run_async
 def drive_callback(bot, update):
-    data = update.callback_query.data.split(', ')
-    folder_idx = int(data[1])
     chat_id = str(update.callback_query.message.chat_id)
+    data = update.callback_query.data.split(', ')
+    try:
+        folder_idx = int(data[1])
+    except ValueError:
+        os.unlink('drive_folder.json')
+        with open('creds/folder_id.json', 'r') as f:
+            data = json.load(f)
+        with open('creds/folder_id.json', 'w') as f:
+            data.pop(chat_id, None)
+            json.dump(data, f)
+        bot.edit_message_text(text="기본 폴더가 선택되었습니다.")
+        return
     gauth = g_auth_bot(update, chat_id)
     if gauth:
         drive = GoogleDrive(gauth)
