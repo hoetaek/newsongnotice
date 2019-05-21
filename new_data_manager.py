@@ -21,6 +21,7 @@ class NewNotice:
             value_data.extend(new_data)
             self.limit_data(value_data, limit=limit)
             self.new_data = self.old_data
+            self.save_data()
             return new_data
         else:
             return
@@ -28,15 +29,23 @@ class NewNotice:
     def verify_key(self, key):
         if key not in self.old_data:
             self.old_data[key] = []
+            if self.new_data:
+                self.new_data[key] = []
 
     def limit_data(self, data, limit):
         if len(data) > limit:
             del data[limit:]
 
-    def save_data(self):
+    def save_data(self, key="", data=[]):
+        if key and data:
+            self.old_data[key] = data
+            self.new_data = self.old_data
         if self.new_data:
             with open(self.filename, 'w') as f:
                 json.dump(self.new_data, f)
 
-    def get_data(self):
+    def get_data(self, key=""):
+        if key:
+            self.verify_key(key)
+            return self.new_data[key] if self.new_data else self.old_data[key]
         return self.new_data if self.new_data else self.old_data

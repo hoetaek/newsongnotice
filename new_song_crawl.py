@@ -11,67 +11,8 @@ from telegram import Bot
 from telegram.error import NetworkError
 from make_db import get_user_list, insert_song, is_song
 from music_file import download_mega_link, download_youtube_link, g_auth, upload_get_link, get_youtube_url
+from new_data_manager import NewNotice
 from server import change_ip
-
-def get_kpop_100():
-    latest_path = os.path.join(BASE_DIR, 'latest.json')
-    kpop_chart_100 = []
-    selectors = [['#lst50 > td:nth-child(6) > div > div > div.ellipsis.rank01 > span > a', '#lst50 > td:nth-child(6) > div > div > div.ellipsis.rank02 > span'],
-                 ['#lst100 > td:nth-child(6) > div > div > div.ellipsis.rank01 > span > a', '#lst100 > td:nth-child(6) > div > div > div.ellipsis.rank02 > span']]
-    for title_sel, artist_sel in selectors:
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36', }
-        response = requests.get('https://www.melon.com/chart/index.htm', headers=headers)
-        html = response.text
-        soup = BeautifulSoup(html, 'html.parser')
-        kpop_chart_100.extend([[title.text, artist.text] for title, artist in zip(soup.select(title_sel), soup.select(artist_sel))])
-    if not kpop_chart_100:
-        bot.sendMessage(chat_id="580916113",
-                        text="멜론 차트 크롤링이 막혔습니다.\n")
-    if os.path.exists(latest_path):
-        with open(latest_path) as f:
-            data = json.load(f)
-        if 'kpop' in data.keys():
-            before = data['kpop']
-            if len(before) > 300:
-                before = before[90:]
-        else:
-            before = []
-        new_songs = [i for i in kpop_chart_100 if i not in before]
-        with open(latest_path, 'w') as f:
-            before.extend(new_songs)
-            data['kpop'] = before
-            json.dump(data, f)
-        conn = sqlite3.connect('user_info.db')
-        c = conn.cursor()
-        c.execute("SELECT user FROM users, charts, users_charts WHERE charts.id = users_charts.charts_id AND"
-                  " users.id = users_charts.user_id AND chart = '{}'".format("melon"))
-        user_list = [user[0] for user in c.fetchall()]
-        for chat_id in user_list:
-            for song in new_songs:
-                c.execute("SELECT link FROM kpop_song WHERE song = ? AND artist = ?", (song[0], song[1]))
-                link = c.fetchone()
-                if link:
-                    link = "다운로드 링크 : " + link[0] + '\n'
-                else:
-                    link = ""
-                bot.sendMessage(chat_id=chat_id,  # 580916113
-                                text= "멜론 차트에 새로운 곡이 올라왔습니다\n" +
-                                      song[1] + ' - ' + song[0] + '\n' +
-                                      "유튜브 링크 : " + get_youtube_url(song[1] + ' - ' + song[0]) + '\n' +
-                                      link +
-                                      "\n알림을 그만 받고 싶다면 [/stop]을 터치해주세요.")
-        c.close()
-        conn.close()
-        # for test
-        # with open(latest_path, 'w') as f:
-        #     data['kpop'] = []
-        #     json.dump(data, f)
-    else:
-        with open(latest_path, 'w') as f:
-            json.dump({'kpop': []}, f)
-        get_kpop_100()
-        return
 
 def get_pop_100():
     latest_path = os.path.join(BASE_DIR, 'latest.json')
@@ -138,6 +79,38 @@ class SongDownloadLink():
         options.add_argument('window-size=1920x1080')
         options.add_argument("disable-gpu")
         return webdriver.Chrome('chromedriver', chrome_options=options)
+
+    def melon_chart(self):
+        driver = self.start_driver()
+        driver.get("https://www.melon.com/chart/index.htm")
+        html = driver.page_source
+        driver.quit()
+        selectors = [['#lst50 > td:nth-child(6) > div > div > div.ellipsis.rank01 > span > a',
+                      '#lst50 > td:nth-child(6) > div > div > div.ellipsis.rank02 > span'],
+                     ['#lst100 > td:nth-child(6) > div > div > div.ellipsis.rank01 > span > a',
+                      '#lst100 > td:nth-child(6) > div > div > div.ellipsis.rank02 > span']]
+        kpop_chart_100 = []
+        for title_sel, artist_sel in selectors:
+            soup = BeautifulSoup(html, 'html.parser')
+            kpop_chart_100.extend(
+                [[title.text, artist.text] for title, artist in zip(soup.select(title_sel), soup.select(artist_sel))])
+        melon_notice = NewNotice('songs.json')
+        new_melon = melon_notice.compare_data("kpop", kpop_chart_100, limit=300)
+        melon_notice.save_data("new_melon", new_melon)
+        return kpop_chart_100
+
+    def bill_chart(self):
+        response = requests.get("https://www.billboard.com/charts/hot-100")
+        html = response.text
+        soup = BeautifulSoup(html, 'html.parser')
+        title_soup = soup.select("div > div.chart-list-item__title > span")
+        artist_soup = soup.select("div > div.chart-list-item__artist")
+        billboard200 = [title.text.strip() + " - " + artist.text.strip() for title, artist in
+                        zip(title_soup, artist_soup)]
+        bill_notice = NewNotice('songs.json')
+        new_bill = bill_notice.compare_data("pop", billboard200, limit=300)
+        bill_notice.save_data("new_bill", new_bill)
+        return billboard200
 
     def crawl_kpop_song_list(self, current_page = 1, end_page = 25):
         print("kpop page num : ", current_page)
