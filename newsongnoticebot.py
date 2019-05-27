@@ -166,7 +166,7 @@ def get_message(bot, update):
                     bot.sendMessage(text=link,
                                     chat_id=chat_id)
 
-    elif text.startswith("https://www.you"):
+    elif text.startswith("https://www.you") or text.startswith("https://you"):
         link = text
         show_list = [InlineKeyboardButton("동영상", callback_data="url, 동영상, " + link), InlineKeyboardButton("음원",
                                             callback_data="url, 음원, " + link)]
