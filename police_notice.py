@@ -84,13 +84,38 @@ def check_snue_update():
                              text="서울교대 새로운 학사공지가 있습니다.\n\n" +
                                   "\n".join(messages))
 
+def check_lost_found():
+    res = requests.get("http://115.84.165.106/admin/find_list.jsp")
+    html = res.text
+    soup = BeautifulSoup(html, 'html.parser')
+    notice = [i for i in soup.select("td > span > a")][2:]
+    notice_title = [i.text.strip() for i in notice]
+    url = "http://115.84.165.106/admin/find_view_0.jsp?curPage=1&targetCode=&searchKey=&sort_1=&code1=&code2=&code3=&code4=&code5=&code6=&cate1=&cate2=&cate3=&cate4=&cate5=&cate6=&cate7=&cate8=&cate9=&cate10=&cate11=&date_start=&date_end=&yy=&mm=&id="
+    notice_link = [url + re.search('\d+', i['onclick']).group() for i in notice]
+    notice = [[i, j] for i, j in zip(notice_title, notice_link)]
+    landf_notice = NewNotice('others.json')
+    new_notice = landf_notice.compare_data("landf_notice", notice)
+    landf_notice.save_data()
+    if new_notice:
+        token = '751248768:AAEJB5JcAh52nWfrSyKTEISGX8_teJIxNFw'
+        bot = Bot(token=token)
+        messages = []
+        for message, link in new_notice:
+            messages.append("<a href=\"{}\"> {} </a>".format(link, message.replace("<", "").replace(">", "")))
+        bot.send_message(chat_id=580916113,
+                         parse_mode="HTML",
+                         text="분실물이 새로 등록되었습니다.\n\n" +
+                              "\n".join(messages))
+
 
 if __name__=='__main__':
     check_police_update()
     check_snue_update()
+    check_lost_found()
 
     schedule.every(3).hours.do(check_police_update)
     schedule.every(3).hours.do(check_snue_update)
+    schedule.every(30).minutes.do(check_lost_found)
 
     while True:
         schedule.run_pending()
