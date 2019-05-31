@@ -111,11 +111,11 @@ def check_lost_found():
 if __name__=='__main__':
     check_police_update()
     check_snue_update()
-    check_lost_found()
+    # check_lost_found()
 
     schedule.every(3).hours.do(check_police_update)
     schedule.every(3).hours.do(check_snue_update)
-    schedule.every(30).minutes.do(check_lost_found)
+    # schedule.every(30).minutes.do(check_lost_found)
 
     while True:
         schedule.run_pending()
