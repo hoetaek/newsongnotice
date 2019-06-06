@@ -179,12 +179,12 @@ def get_message(bot, update):
             soup = BeautifulSoup(html, 'html.parser')
             plist_title = soup.select("h1.pl-header-title")[0].text
             plist_title = ''.join(plist_title.splitlines()).strip()
-            for url in urls:
+            for i, url in zip(["%.2d" % i for i in range(len(urls))], urls):
                 yt = YouTube(url)
                 title = yt.title
                 update.message.reply_text("{}을(를) 유튜브에서 다운 받는 중입니다.".format(title))
                 try:
-                    video_file_name = yt.streams.first().download()
+                    video_file_name = yt.streams.first().download(filename=i+' '+title)
                     video_file_name = os.path.basename(video_file_name)
                     drive_auth = g_auth_bot(update, chat_id)
                     if drive_auth:
