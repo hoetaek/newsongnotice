@@ -379,7 +379,9 @@ def download_url(bot, update):
                 update.callback_query.message.reply_text("{}을(를) 음원으로 변환 중입니다.".format(title))
                 if video_file_name.endswith('mp4'):
                     music_file_name = video_file_name[:-1] + '3'
-                    cover = wget.download(yt.thumbnail_url)
+                    thumbnail = yt.player_config_args['player_response']['videoDetails']['thumbnail']['thumbnails'][-2][
+                        'url']
+                    cover = wget.download(thumbnail)
                     command = ['ffmpeg', '-i', video_file_name.encode('utf-8'), '-i', cover.encode('utf-8'), '-acodec',
                                'libmp3lame',
                                '-b:a', '192k', '-c:v', 'copy', '-map', '0:a:0', '-map', '1:v:0',
