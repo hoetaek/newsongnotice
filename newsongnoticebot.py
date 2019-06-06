@@ -4,7 +4,7 @@ from pydrive.drive import GoogleDrive
 import sqlite3, json
 from make_db import is_artist, insert_song, get_song_list
 from new_song_crawl import SongDownloadLink, get_youtube_url
-from music_file import g_auth, g_auth_bot, upload_get_link, download_youtube_link, get_track_data
+from music_file import g_auth, g_auth_bot, upload_get_link, download_youtube_link, get_track_data, list_folder
 from new_data_manager import NewNotice
 from telegram.ext.dispatcher import run_async
 from pytube import YouTube, Playlist
@@ -12,6 +12,8 @@ from pytube.exceptions import RegexMatchError
 import os, re, difflib, subprocess, wget
 from subprocess import run, PIPE
 from mutagen.id3 import ID3, USLT
+import requests
+from bs4 import BeautifulSoup
 
 @run_async
 def get_message(bot, update):
@@ -171,30 +173,35 @@ def get_message(bot, update):
         plist = Playlist(playlist_link)
         plist.populate_video_urls()
         urls = plist.video_urls
-        for url in urls:
-            yt = YouTube(url)
-            title = yt.title
-            update.message.reply_text("{}을(를) 유튜브에서 다운 받는 중입니다.".format(title))
-            try:
-                video_file_name = yt.streams.first().download()
-                video_file_name = os.path.basename(video_file_name)
-
-                drive_auth = g_auth_bot(update, chat_id)
-                if drive_auth:
-                    update.message.reply_text("{}을(를) 드라이브에 업로드 중입니다.".format(title))
-                    upload_get_link(drive_auth, video_file_name, chat_id, permission=False)
-                    update.message.reply_text("{}을(를) 업로드 완료했습니다.\n"
-                                                             "구글 드라이브에서 확인해주세요.".format(title))
-                else:
-                    drive_auth = g_auth_bot(update, 'my')
-                    update.message.reply_text("인증에 실패하셨습니다.")
-                    update.message.reply_text("{}을(를) 드라이브에 업로드 중입니다.".format(title))
-                    video_drive_link = upload_get_link(drive_auth, video_file_name, chat_id)
-                    update.message.reply_text("{}을(를) 업로드 완료했습니다.\n"
-                                                             "동영상 링크 : {}".format(title, video_drive_link))
-            except Exception as e:
-                bot.sendMessage(chat_id="580916113",
-                                text="error occured while downloading playlist " + str(e))
+        if urls:
+            res = requests.get(text)
+            html = res.text
+            soup = BeautifulSoup(html, 'html.parser')
+            plist_title = soup.select("h1.pl-header-title")[0].text
+            plist_title = ''.join(plist_title.splitlines()).strip()
+            for url in urls:
+                yt = YouTube(url)
+                title = yt.title
+                update.message.reply_text("{}을(를) 유튜브에서 다운 받는 중입니다.".format(title))
+                try:
+                    video_file_name = yt.streams.first().download()
+                    video_file_name = os.path.basename(video_file_name)
+                    drive_auth = g_auth_bot(update, chat_id)
+                    if drive_auth:
+                        update.message.reply_text("{}을(를) 드라이브에 업로드 중입니다.".format(title))
+                        upload_get_link(drive_auth, video_file_name, chat_id, permission=False, playlist=plist_title)
+                        update.message.reply_text("{}을(를) 업로드 완료했습니다.\n"
+                                                                 "구글 드라이브에서 확인해주세요.".format(title))
+                    else:
+                        drive_auth = g_auth_bot(update, 'my')
+                        update.message.reply_text("인증에 실패하셨습니다.")
+                        update.message.reply_text("{}을(를) 드라이브에 업로드 중입니다.".format(title))
+                        video_drive_link = upload_get_link(drive_auth, video_file_name, chat_id, playlist=plist_title)
+                        update.message.reply_text("{}을(를) 업로드 완료했습니다.\n"
+                                                                 "동영상 링크 : {}".format(title, video_drive_link))
+                except Exception as e:
+                    bot.sendMessage(chat_id="580916113",
+                                    text="error occured while downloading playlist " + str(e))
 
 
     elif text.startswith("https://www.you") or text.startswith("https://you"):
@@ -572,10 +579,6 @@ def drive_selected(bot, update):
     bot.edit_message_text(text="{}가 선택되었습니다.".format(folder_title),
                           chat_id=update.callback_query.message.chat_id,
                           message_id=update.callback_query.message.message_id)
-
-def list_folder(drive, id):
-    folder_list = drive.ListFile({'q': "'{}' in parents and trashed=false and mimeType='application/vnd.google-apps.folder'".format(id)}).GetList()
-    return folder_list
 
 def command(bot, update):
     update.message.reply_text(
