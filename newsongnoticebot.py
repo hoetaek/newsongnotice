@@ -170,6 +170,7 @@ def get_message(bot, update):
 
     elif text.startswith("https://www.youtube.com/playlist"):
         playlist_link = text
+        print("Start playlist download", playlist_link)
         plist = Playlist(playlist_link)
         plist.populate_video_urls()
         urls = plist.video_urls
@@ -179,6 +180,7 @@ def get_message(bot, update):
             soup = BeautifulSoup(html, 'html.parser')
             plist_title = soup.select("h1.pl-header-title")[0].text
             plist_title = ''.join(plist_title.splitlines()).strip()
+            print("Playlist title", plist_title)
             for i, url in zip(["%.2d" % i for i in range(len(urls))], urls):
                 yt = YouTube(url)
                 title = yt.title
