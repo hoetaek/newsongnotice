@@ -8,7 +8,7 @@ from music_file import g_auth, g_auth_bot, upload_get_link, download_youtube_lin
 from new_data_manager import NewNotice
 from telegram.ext.dispatcher import run_async
 from pytube import YouTube, Playlist
-from pytube.exceptions import RegexMatchError
+from pytube.exceptions import RegexMatchError, VideoUnavailable
 import os, re, difflib, subprocess, wget
 from subprocess import run, PIPE
 from mutagen.id3 import ID3, USLT
@@ -182,7 +182,11 @@ def get_message(bot, update):
             plist_title = ''.join(plist_title.splitlines()).strip()
             print("Playlist title", plist_title)
             for i, url in zip(["%.2d" % i for i in range(len(urls))], urls):
-                yt = YouTube(url)
+                try:
+                    yt = YouTube(url)
+                except VideoUnavailable:
+                    update.message.reply_text("영상을 다운 받을 수 없습니다. 성인인증이 필요한 영상일 수 있습니다.")
+                    continue
                 title = yt.title
                 update.message.reply_text("{}을(를) 유튜브에서 다운 받는 중입니다.".format(title))
                 try:
