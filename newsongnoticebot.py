@@ -185,7 +185,7 @@ def get_message(bot, update):
                 try:
                     yt = YouTube(url)
                 except VideoUnavailable:
-                    update.message.reply_text("영상을 다운 받을 수 없습니다. 성인인증이 필요한 영상일 수 있습니다.")
+                    update.message.reply_text("영상을 다운 받을 수 없습니다. 성인인증이 필요한 영상일 수 있습니다.\n" + url)
                     continue
                 title = yt.title
                 update.message.reply_text("{}을(를) 유튜브에서 다운 받는 중입니다.".format(title))
