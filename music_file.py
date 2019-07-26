@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from pydrive.auth import GoogleAuth, AuthenticationError
 from pydrive.drive import GoogleDrive
 from pytube import YouTube
@@ -9,6 +10,8 @@ import wget
 from subprocess import run, PIPE
 import os, re, json
 from mutagen.id3 import ID3, USLT
+import youtube_dl
+from urllib.error import HTTPError
 
 def download_mega_link(link):
     file_name = run(["megadl", "--print-names", "--no-progress", link.encode('utf-8')], stdout=PIPE, stderr=PIPE)
@@ -21,7 +24,11 @@ def download_youtube_link(song, artist, itunes = True):
     print("downloading from youtube")
     link = get_youtube_url(artist + ' - ' + song)
     yt = YouTube(link)
-    file_name = yt.streams.first().download()
+    try:
+        file_name = yt.streams.first().download()
+    except HTTPError:
+        download_youtube_mp3(link, artist, song)
+        file_name = artist + ' - ' + song + '.mp3'
     print("getting track data")
     pattern1 = r'\((.*?)\)'
     track_data = get_track_data(re.sub(pattern1, '', song) + ' ' + re.sub(pattern1, '', artist))
@@ -243,6 +250,37 @@ def get_youtube_url(keyword, limit=1):
             i += 1
     return urls if urls else "no youtube link"
 
+
+class MyLogger(object):
+    def debug(self, msg):
+        pass
+
+    def warning(self, msg):
+        pass
+
+    def error(self, msg):
+        print(msg)
+
+def my_hook(d):
+    if d['status'] == 'finished':
+        print('Done downloading, now converting ...')
+
+def download_youtube_mp3(link, artist, song):
+    ydl_opts = {
+        'writethumbnail': True,
+        'outtmpl': f'{artist} - {song}.mp4',
+        'format': 'bestaudio/best',
+        'postprocessors': [{
+            'key': 'FFmpegExtractAudio',
+            'preferredcodec': 'mp3',
+            'preferredquality': '192',
+        }],
+        'logger': MyLogger(),
+        'progress_hooks': [my_hook],
+    }
+    with youtube_dl.YoutubeDL(ydl_opts) as ydl:
+        ydl.download([link])
+
 if __name__=='__main__':
     # download_youtube_link("Always Remember Us This Way", "Lady GaGa")
     # download_youtube_link("꽃 길", "BIGBANG(빅뱅)", itunes=False)
@@ -251,8 +289,8 @@ if __name__=='__main__':
     # mega_output = download_mega_link("https://mega.nz/#!3iZCxKIS!8LhjRrLOPBcJT892x3sS8UNBZ2JTYPI1fPtD-Lss7p0")
     # if mega_output[1].endswith("Can't determine download url"):
     #     print("True")
-    i = 5
-    print(get_track_data("박효신", index=i))
+    download_youtube_link('뭐해(what are you up to)', '강다니엘')
+    # download_youtube_mp3("https://www.youtube.com/watch?v=_-QY40Reub8", '뭐해(what are you up to)', '강다니엘')
     # [print(m) for m in mega_output]
     # conn = sqlite3.connect("user_info.db")
     # c = conn.cursor()
