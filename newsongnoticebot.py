@@ -4,7 +4,7 @@ from pydrive.drive import GoogleDrive
 import sqlite3, json
 from make_db import is_artist, insert_song, get_song_list
 from new_song_crawl import SongDownloadLink, get_youtube_url
-from music_file import g_auth, g_auth_bot, upload_get_link, download_youtube_link, get_track_data, list_folder
+from music_file import g_auth, g_auth_bot, upload_get_link, download_youtube, download_youtube_link, get_track_data, list_folder
 from new_data_manager import NewNotice
 from telegram.ext.dispatcher import run_async
 from pytube import YouTube, Playlist
@@ -138,8 +138,7 @@ def get_message(bot, update):
                 yt = YouTube(link)
                 title = yt.title
                 update.message.reply_text("{}을(를) 유튜브에서 다운 받는 중입니다.".format(title))
-                video_file_name = yt.streams.first().download()
-                video_file_name = os.path.basename(video_file_name)
+                video_file_name = download_youtube(link)
                 drive_auth = g_auth_bot(update, chat_id)
                 if drive_auth:
                     update.message.reply_text("{}을(를) 드라이브에 업로드 중입니다.".format(title))
@@ -369,8 +368,7 @@ def download_url(bot, update):
         bot.edit_message_text(text="{}을(를) 유튜브에서 다운 받는 중입니다.".format(title),
                               chat_id=update.callback_query.message.chat_id,
                               message_id=update.callback_query.message.message_id)
-        video_file_name = yt.streams.first().download()
-        video_file_name = os.path.basename(video_file_name)
+        video_file_name = download_youtube(link)
 
         if down_type=='동영상':
             drive_auth = g_auth_bot(update, chat_id)

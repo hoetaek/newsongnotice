@@ -19,6 +19,14 @@ def download_mega_link(link):
     err = file_name.stderr
     return output.decode('utf-8').strip(), err.decode('utf-8').strip()
 
+def download_youtube(link):
+    yt = YouTube(link)
+    try:
+        file_name = yt.streams.first().download()
+    except HTTPError:
+        file_name = download_youtube_mp3(link)
+    return os.path.basename(file_name)
+
 def download_youtube_link(song, artist, itunes = True):
     print(artist, song)
     print("downloading from youtube")
@@ -267,18 +275,23 @@ def my_hook(d):
     if d['status'] == 'finished':
         print('Done downloading')
 
-def download_youtube_mp3(link, artist, song):
+def download_youtube_mp3(link, artist='', song=''):
     ydl_opts = {
-        'writethumbnail': True,
-        'outtmpl': f'{artist} - {song}.mp4',
+        'outtmpl': '%(title)s.%(ext)s',
         'format': 'mp4',
         'logger': MyLogger(),
         'progress_hooks': [my_hook],
     }
+    if artist and song:
+        ydl_opts['outtmpl'] = f'{artist} - {song}.mp4'
+        ydl_opts['writethumbnail'] = True
     with youtube_dl.YoutubeDL(ydl_opts) as ydl:
-        ydl.download([link])
+        info_dict = ydl.extract_info(link, download=True)
+        filename = ydl.prepare_filename(info_dict)
+    return filename
 
 if __name__=='__main__':
+    pass
     # download_youtube_link("Always Remember Us This Way", "Lady GaGa")
     # download_youtube_link("꽃 길", "BIGBANG(빅뱅)", itunes=False)
     # get_track_data('장범준')
@@ -286,7 +299,7 @@ if __name__=='__main__':
     # mega_output = download_mega_link("https://mega.nz/#!3iZCxKIS!8LhjRrLOPBcJT892x3sS8UNBZ2JTYPI1fPtD-Lss7p0")
     # if mega_output[1].endswith("Can't determine download url"):
     #     print("True")
-    download_youtube_link('뭐해', '강 다니엘')
+    # download_youtube_link('뭐해', '강 다니엘')
     # download_youtube_mp3("https://www.youtube.com/watch?v=_-QY40Reub8", '강다니엘', '뭐해(what are you up to)')
     # [print(m) for m in mega_output]
     # conn = sqlite3.connect("user_info.db")
