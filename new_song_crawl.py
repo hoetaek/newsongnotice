@@ -75,7 +75,7 @@ def get_pop_100():
 class SongDownloadLink():
     def start_driver(self):
         options = webdriver.ChromeOptions()
-        options.add_argument('headless')
+        # options.add_argument('headless')
         options.add_argument('window-size=1920x1080')
         options.add_argument("disable-gpu")
         return webdriver.Chrome('chromedriver', chrome_options=options)
@@ -114,7 +114,7 @@ class SongDownloadLink():
 
     def crawl_kpop_song_list(self, current_page = 1, end_page = 25):
         print("kpop page num : ", current_page)
-        url = "https://lover.ne.kr:124/bbs/zboard.php?id=sitelink1&page={}&select_arrange=headnum&desc=asc&category=1" \
+        url = "https://lover.ne.kr:124/bbs/zboard.php?id=sitelink7&page={}&select_arrange=headnum&desc=asc&category=1" \
               "&sn=off&ss=on&sc=on&keyword=&sn1=&divpage=1".format(current_page)
         song_type = 'kpop'
         driver = self.start_driver()
@@ -156,7 +156,7 @@ class SongDownloadLink():
 
     def crawl_pop_song_list(self, current_page = 1, end_page = 25):
         print("pop page num : ", current_page)
-        url = "https://lover.ne.kr:124/bbs/zboard.php?category=4&id=sitelink1&page={}&page_num=24&sn=off&ss=on&sc=on&" \
+        url = "https://lover.ne.kr:124/bbs/zboard.php?category=4&id=sitelink7&page={}&page_num=24&sn=off&ss=on&sc=on&" \
               "keyword=&select_arrange=headnum&desc=asc".format(current_page)
         song_type = 'pop'
         driver = self.start_driver()
@@ -274,7 +274,10 @@ class SongDownloadLink():
                 except IndexError:
                     iframe_link = soup.select("strong > a")[0]['href']
             if iframe_link.startswith('..'):
-                url = "https://lover.ne.kr:124" + iframe_link[2:].replace('/link', '').strip()
+                iframe_link = iframe_link[2:].replace('/link', '').strip()
+                while '/link' in iframe_link:
+                    iframe_link = iframe_link.replace('/link', '')
+                url = "https://lover.ne.kr:124" + iframe_link
                 driver.get(url)
                 html_source = driver.page_source
                 driver.quit()
@@ -313,7 +316,7 @@ class SongDownloadLink():
                 # if song_type == 'kpop':
                 #     file = song_artist + ' - ' + song_name + '.mp3'
             elif iframe_link.startswith("https://mega"):
-                driver.quit()
+                # driver.quit()
                 file, err = download_mega_link(iframe_link)
                 download_link = iframe_link
                 if not file :
@@ -382,15 +385,11 @@ token = '751248768:AAEJB5JcAh52nWfrSyKTEISGX8_teJIxNFw'
 bot = Bot(token=token)
 
 
+
 if __name__=='__main__':
     Chrome = SongDownloadLink()
     Chrome.crawl_kpop_song_list()
     Chrome.crawl_pop_song_list()
-    for i in range(2):
-        print(i)
-        get_pop_100()
-        # get_kpop_100()
-    # schedule.every(300).minutes.do(get_kpop_100)
     schedule.every(3).minutes.do(get_pop_100)
     schedule.every(30).minutes.do(Chrome.crawl_kpop_song_list)
     schedule.every(30).minutes.do(Chrome.crawl_pop_song_list)

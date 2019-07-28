@@ -17,7 +17,7 @@ def download_mega_link(link):
     file_name = run(["megadl", "--print-names", "--no-progress", link.encode('utf-8')], stdout=PIPE, stderr=PIPE)
     output = file_name.stdout
     err = file_name.stderr
-    return  output.decode('utf-8').strip(), err.decode('utf-8').strip()
+    return output.decode('utf-8').strip(), err.decode('utf-8').strip()
 
 def download_youtube_link(song, artist, itunes = True):
     print(artist, song)
@@ -26,13 +26,16 @@ def download_youtube_link(song, artist, itunes = True):
     yt = YouTube(link)
     try:
         file_name = yt.streams.first().download()
+        cover = wget.download(yt.thumbnail_url)
     except HTTPError:
         download_youtube_mp3(link, artist, song)
-        file_name = artist + ' - ' + song + '.mp3'
+        cover = artist + ' - ' + song + '.jpg'
+        file_name = artist + ' - ' + song + '.mp4'
     print("getting track data")
     pattern1 = r'\((.*?)\)'
     track_data = get_track_data(re.sub(pattern1, '', song) + ' ' + re.sub(pattern1, '', artist))
     if track_data:
+        os.unlink(cover)
         title, cover, metadata, lyrics = track_data
         cover = wget.download(cover, out=artist + ' - ' + song + '.jpg')
         metadata_keys = list(metadata.keys())
@@ -43,7 +46,6 @@ def download_youtube_link(song, artist, itunes = True):
         print("no metadata")
         title = artist + ' - ' + song
         lyrics = ""
-        cover = wget.download(yt.thumbnail_url)
         metadata = []
     if itunes == False:
         title = artist + ' - ' + song
@@ -263,18 +265,13 @@ class MyLogger(object):
 
 def my_hook(d):
     if d['status'] == 'finished':
-        print('Done downloading, now converting ...')
+        print('Done downloading')
 
 def download_youtube_mp3(link, artist, song):
     ydl_opts = {
         'writethumbnail': True,
         'outtmpl': f'{artist} - {song}.mp4',
-        'format': 'bestaudio/best',
-        'postprocessors': [{
-            'key': 'FFmpegExtractAudio',
-            'preferredcodec': 'mp3',
-            'preferredquality': '192',
-        }],
+        'format': 'mp4',
         'logger': MyLogger(),
         'progress_hooks': [my_hook],
     }
@@ -289,8 +286,8 @@ if __name__=='__main__':
     # mega_output = download_mega_link("https://mega.nz/#!3iZCxKIS!8LhjRrLOPBcJT892x3sS8UNBZ2JTYPI1fPtD-Lss7p0")
     # if mega_output[1].endswith("Can't determine download url"):
     #     print("True")
-    download_youtube_link('뭐해(what are you up to)', '강다니엘')
-    # download_youtube_mp3("https://www.youtube.com/watch?v=_-QY40Reub8", '뭐해(what are you up to)', '강다니엘')
+    download_youtube_link('뭐해', '강 다니엘')
+    # download_youtube_mp3("https://www.youtube.com/watch?v=_-QY40Reub8", '강다니엘', '뭐해(what are you up to)')
     # [print(m) for m in mega_output]
     # conn = sqlite3.connect("user_info.db")
     # c = conn.cursor()
