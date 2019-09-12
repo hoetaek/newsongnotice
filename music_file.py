@@ -13,6 +13,24 @@ from mutagen.id3 import ID3, USLT
 import youtube_dl
 from urllib.error import HTTPError
 
+
+class YoutubeManager:
+    def __init__(self):
+        pass
+
+    def get_song_link(self, artist, song):
+        pass
+
+    def download_video(self, link):
+        pass
+
+    def convert_to_mp3(self, videofile):
+        pass
+
+    def get_track_data(self, artist, song):
+        pass
+
+
 def download_mega_link(link):
     file_name = run(["megadl", "--print-names", "--no-progress", link.encode('utf-8')], stdout=PIPE, stderr=PIPE)
     output = file_name.stdout
@@ -20,11 +38,7 @@ def download_mega_link(link):
     return output.decode('utf-8').strip(), err.decode('utf-8').strip()
 
 def download_youtube(link):
-    yt = YouTube(link)
-    try:
-        file_name = yt.streams.first().download()
-    except HTTPError:
-        file_name = download_youtube_mp3(link)
+    file_name = download_youtube_mp3(link)
     return os.path.basename(file_name)
 
 def download_youtube_link(song, artist, itunes = True):
