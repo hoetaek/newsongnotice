@@ -369,6 +369,7 @@ def download_url(bot, update):
                               chat_id=update.callback_query.message.chat_id,
                               message_id=update.callback_query.message.message_id)
         video_file_name = download_youtube(link)
+        print(video_file_name)
 
         if down_type=='동영상':
             drive_auth = g_auth_bot(update, chat_id)

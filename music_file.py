@@ -305,7 +305,16 @@ def download_youtube_mp3(link, artist='', song=''):
     return filename
 
 if __name__=='__main__':
-    pass
+    import subprocess
+    video_file_name = download_youtube_mp3("https://www.youtube.com/watch?v=P79G22cJe74")
+    music_file_name = video_file_name[:-1] + '3'
+    cover = 'ex1.jpg'
+    command = ['ffmpeg', '-i', video_file_name.encode('utf-8'), '-i', cover.encode('utf-8'), '-acodec',
+               'libmp3lame',
+               '-b:a', '192k', '-c:v', 'copy', '-map', '0:a:0', '-map', '1:v:0',
+               music_file_name.encode('utf-8')]
+    subprocess.call(command)#, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    os.unlink(video_file_name)
     # download_youtube_link("Always Remember Us This Way", "Lady GaGa")
     # download_youtube_link("꽃 길", "BIGBANG(빅뱅)", itunes=False)
     # get_track_data('장범준')
