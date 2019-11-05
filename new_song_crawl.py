@@ -75,7 +75,7 @@ def get_pop_100():
 class SongDownloadLink():
     def start_driver(self):
         options = webdriver.ChromeOptions()
-        # options.add_argument('headless')
+        options.add_argument('headless')
         options.add_argument('window-size=1920x1080')
         options.add_argument("disable-gpu")
         return webdriver.Chrome('chromedriver', chrome_options=options)
@@ -170,7 +170,7 @@ class SongDownloadLink():
             time.sleep(10600)
             self.crawl_pop_song_list(current_page=current_page, end_page=end_page)
             return
-        for i in soup_songs:
+        for i in soup_songs[1:]:
             info = i.text.split(' - ')
             artist = info[0].strip()
             song = info[1].strip()
@@ -277,20 +277,42 @@ class SongDownloadLink():
                 iframe_link = iframe_link[2:].replace('/link', '').strip()
                 while '/link' in iframe_link:
                     iframe_link = iframe_link.replace('/link', '')
-                url = "https://lover.ne.kr:124" + iframe_link
+                last_slash_dix = iframe_link.rfind('/')
+                url = "https://lover.ne.kr:124" + iframe_link[:last_slash_dix+1] + 'a/e/' + iframe_link[last_slash_dix+1:]
                 driver.get(url)
                 html_source = driver.page_source
-                driver.quit()
                 soup = BeautifulSoup(html_source, 'html.parser')
-                download_soup = soup.select("script[type='text/javascript']")[-1]
                 try:
-                    download_link = re.findall('https://[^\"]*', str(download_soup))[0]
+                    download_soup = soup.select("script[language='javascript']")[0].text
+                    download_link = ''.join([re.findall(r'".*"', i)[0].replace('"', '') for i in download_soup.splitlines()[1:4]])
                 except IndexError:
+                    url = "https://lover.ne.kr:124" + iframe_link[:last_slash_dix + 1] + 'a/b/' + iframe_link[
+                                                                                                  last_slash_dix + 1:]
+                    driver.get(url)
+                    html_source = driver.page_source
+                    soup = BeautifulSoup(html_source, 'html.parser')
                     try:
-                        download_soup = soup.select("body > div > center:nth-child(13) > script:nth-child(2)")[0]
-                        download_link = re.findall('https://[^\"]*', str(download_soup))[0]
+                        download_soup = soup.select("script[language='javascript']")[0].text
+                        download_link = ''.join(
+                            [re.findall(r'".*"', i)[0].replace('"', '') for i in download_soup.splitlines()[1:4]])
                     except IndexError:
-                        download_link = soup.select("#sex > a")[0]['href']
+                        url = "https://lover.ne.kr:124" + iframe_link[:last_slash_dix + 1] + 'a/z/' + iframe_link[
+                                                                                                      last_slash_dix + 1:]
+                        driver.get(url)
+                        html_source = driver.page_source
+                        soup = BeautifulSoup(html_source, 'html.parser')
+                        download_soup = soup.select("script[language='javascript']")[0].text
+                        download_link = ''.join(
+                            [re.findall(r'".*"', i)[0].replace('"', '') for i in download_soup.splitlines()[1:4]])
+                driver.quit()
+                # try:
+                #     download_link = re.findall('https://[^\"]*', str(download_soup))[0]
+                # except IndexError:
+                #     try:
+                #         download_soup = soup.select("body > div > center:nth-child(13) > script:nth-child(2)")[0]
+                #         download_link = re.findall('https://[^\"]*', str(download_soup))[0]
+                #     except IndexError:
+                #         download_link = soup.select("#sex > a")[0]['href']
                 file, err = download_mega_link(download_link)
                 if not file :
                     if err.endswith("Can't determine download url"):
@@ -388,7 +410,7 @@ bot = Bot(token=token)
 
 if __name__=='__main__':
     Chrome = SongDownloadLink()
-    Chrome.crawl_kpop_song_list()
+    # Chrome.crawl_kpop_song_list()
     Chrome.crawl_pop_song_list()
     schedule.every(3).minutes.do(get_pop_100)
     schedule.every(30).minutes.do(Chrome.crawl_kpop_song_list)

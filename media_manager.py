@@ -43,7 +43,6 @@ class DownloadYoutube:
             self.filename = ydl.prepare_filename(self.info_dict)
             self.thumbnail = self.filename[:self.filename.rfind('.')] + '.jpg'
 
-
     def download_playlist(self):
         ydl_opts = {
             'quiet': True,
@@ -82,7 +81,7 @@ class VideoToMp3:
                         metadata_keys[i // 2] + '=' + str(metadata[metadata_keys[i // 2]])).encode('utf-8') for i in
                 range(len(metadata) * 2)]
 
-            music = title.replace("/", "") + ".mp3"
+            music = artist + ' - ' + song + ".mp3"
             command = ['ffmpeg', '-i', self.file_name.encode('utf-8'), '-i', cover.encode('utf-8'), '-acodec',
                        'libmp3lame',
                        '-b:a', '192k', '-c:v', 'copy',
@@ -99,9 +98,15 @@ class VideoToMp3:
             os.unlink(cover)
             return os.path.basename(music)
 
+        else:
+            self.convert_to_mp3()
+
 
 class MusicData:
     def __init__(self, artist, song):
+        pattern = r'\(([^)]+)\)'
+        artist = re.sub(pattern, '', artist).strip()
+        song = re.sub(pattern, '', song).strip()
         self.term = f'{artist} - {song}'
 
     def get_track_data(self, search_num=1, no_lyrics=False):
@@ -190,7 +195,7 @@ class YoutubeUtil:
         video_file, thumbnail = youtube.filename, youtube.thumbnail
         return VideoToMp3(video_file, thumbnail).convert_to_mp3()
 
-    def download_youtube_music_with_info(self):
+    def download_youtube_music_get_info(self):
         youtube = DownloadYoutube(self.link)
         youtube.start_download()
         video_file, thumbnail = youtube.filename, youtube.thumbnail
@@ -200,12 +205,20 @@ class YoutubeUtil:
         else:
             return VideoToMp3(video_file, thumbnail).convert_to_mp3()
 
+    def download_youtube_music_with_only_info(self, track_data):
+        if self.artist and self.song:
+            self.link = self.get_song_link()
+            youtube = DownloadYoutube(self.link)
+            youtube.start_download()
+            video_file, thumbnail = youtube.filename, youtube.thumbnail
+            return VideoToMp3(video_file, thumbnail).convert_to_mp3_with_info(self.song, self.artist, track_data)
+
     def download_youtube_playlist(self):
         youtube = DownloadYoutube(self.link)
         youtube.start_download()
         return youtube.title
 
-    def download_youtube_with_no_link(self):
+    def download_youtube_music_with_no_link(self):
         if self.artist and self.song:
             self.link = self.get_song_link()
             youtube = DownloadYoutube(self.link)
@@ -353,5 +366,5 @@ def list_folder(drive, id):
 
 
 if __name__ == '__main__':
-    yt = YoutubeUtil(link='https://www.youtube.com/watch?v=p98XrR9_FXU')
-    print(yt.download_youtube_music())
+    yt = YoutubeUtil(song='안녕 (드라마"호텔 델루나")', artist='폴킴')
+    print(yt.download_youtube_music_with_no_link())

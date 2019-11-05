@@ -4,7 +4,9 @@ from pydrive.drive import GoogleDrive
 import sqlite3, json
 from make_db import is_artist, insert_song, get_song_list
 from new_song_crawl import SongDownloadLink, get_youtube_url
-from music_file import g_auth, g_auth_bot, upload_get_link, download_youtube, download_youtube_link, get_track_data, list_folder
+from music_file import g_auth, g_auth_bot, upload_get_link, download_youtube, download_youtube_link, get_track_data, \
+    list_folder
+import media_manager
 from new_data_manager import NewNotice
 from telegram.ext.dispatcher import run_async
 from pytube import YouTube, Playlist
@@ -15,6 +17,7 @@ from mutagen.id3 import ID3, USLT
 import requests
 from bs4 import BeautifulSoup
 
+
 @run_async
 def get_message(bot, update):
     chat_id = str(update.message['chat']['id'])
@@ -24,7 +27,7 @@ def get_message(bot, update):
     if len(text) == 57:
         file_name = 'gauth_code.json'
         with open(file_name, 'w') as f:
-            json.dump({chat_id:text}, f)
+            json.dump({chat_id: text}, f)
 
     if text.startswith("검색"):
         keyword = text[2:].strip()
@@ -189,21 +192,21 @@ def get_message(bot, update):
                 title = yt.title
                 update.message.reply_text("{}을(를) 유튜브에서 다운 받는 중입니다.".format(title))
                 try:
-                    video_file_name = yt.streams.first().download(filename=i+' '+title)
+                    video_file_name = yt.streams.first().download(filename=i + ' ' + title)
                     video_file_name = os.path.basename(video_file_name)
                     drive_auth = g_auth_bot(update, chat_id)
                     if drive_auth:
                         update.message.reply_text("{}을(를) 드라이브에 업로드 중입니다.".format(title))
                         upload_get_link(drive_auth, video_file_name, chat_id, permission=False, playlist=plist_title)
                         update.message.reply_text("{}을(를) 업로드 완료했습니다.\n"
-                                                                 "구글 드라이브에서 확인해주세요.".format(title))
+                                                  "구글 드라이브에서 확인해주세요.".format(title))
                     else:
                         drive_auth = g_auth_bot(update, 'my')
                         update.message.reply_text("인증에 실패하셨습니다.")
                         update.message.reply_text("{}을(를) 드라이브에 업로드 중입니다.".format(title))
                         video_drive_link = upload_get_link(drive_auth, video_file_name, chat_id, playlist=plist_title)
                         update.message.reply_text("{}을(를) 업로드 완료했습니다.\n"
-                                                                 "동영상 링크 : {}".format(title, video_drive_link))
+                                                  "동영상 링크 : {}".format(title, video_drive_link))
                 except Exception as e:
                     bot.sendMessage(chat_id="580916113",
                                     text="error occured while downloading playlist " + str(e))
@@ -212,7 +215,7 @@ def get_message(bot, update):
     elif text.startswith("https://www.you") or text.startswith("https://you"):
         link = text
         show_list = [InlineKeyboardButton("동영상", callback_data="url, 동영상, " + link), InlineKeyboardButton("음원",
-                                            callback_data="url, 음원, " + link)]
+                                                                                                          callback_data="url, 음원, " + link)]
         menu = build_menu(show_list, 2)
         show_markup = InlineKeyboardMarkup(menu)
         bot.sendMessage(text="동영상 또는 음원을 골라주세요.",
@@ -244,7 +247,8 @@ def get_message(bot, update):
         track_data = get_track_data(keyword, index='all', search=True)
         if track_data:
             titles = [i[0] for i in track_data]
-            show_list = [InlineKeyboardButton(title, callback_data= 'itm, ' + str(i) + ", " + keyword) for i, title in enumerate(titles)]
+            show_list = [InlineKeyboardButton(title, callback_data='itm, ' + str(i) + ", " + keyword) for i, title in
+                         enumerate(titles)]
             menu = build_menu(show_list, 1)
             show_markup = InlineKeyboardMarkup(menu)
             bot.sendMessage(text="다운로드 받고 싶은 음원을 골라주세요.",
@@ -272,7 +276,8 @@ def get_message(bot, update):
             for song_type in ['kpop', 'pop']:
                 c.execute("SELECT artist FROM {}_artist".format(song_type))
                 songs.extend(sorted([artist[0] for artist in c.fetchall()]))
-            songs = [artist for artist in songs if show_dif(artist.lower(), keyword.lower()) < 0.1 or (len(keyword.lower()) > 1 and keyword.lower() in artist.lower())]
+            songs = [artist for artist in songs if show_dif(artist.lower(), keyword.lower()) < 0.1 or (
+                        len(keyword.lower()) > 1 and keyword.lower() in artist.lower())]
             for artist in songs:
                 for song_type in ['kpop', 'pop']:
                     song_infos = get_song_list(c, song_type, artist)
@@ -282,19 +287,20 @@ def get_message(bot, update):
                                                           callback_data="send, " + song_type + ", " + str(song_info[0]))
                                      for song_info in song_infos] \
                                     + [InlineKeyboardButton('get all',
-                                                            callback_data="send, " + song_type + ", " + "get all, " + str(artist_id))]
+                                                            callback_data="send, " + song_type + ", " + "get all, " + str(
+                                                                artist_id))]
                         menu = build_menu(show_list, 1)
                         show_markup = InlineKeyboardMarkup(menu)
                         bot.sendMessage(text="{}이(가) 선택되었습니다.".format(artist),
-                                              chat_id=chat_id,
-                                              reply_markup=show_markup)
+                                        chat_id=chat_id,
+                                        reply_markup=show_markup)
                     elif len(song_infos) == 1:
                         song_info = song_infos[0]
                         song = song_info[1]
                         artist = song_info[2]
                         link = song_info[3]
                         bot.sendMessage(text="{}이(가) 선택되었습니다.".format(artist + ' - ' + song),
-                                              chat_id=chat_id)
+                                        chat_id=chat_id)
                         bot.sendMessage(chat_id=chat_id,
                                         text="곡 : " + artist + ' - ' + song + \
                                              '\n유튜브 링크 : ' + get_youtube_url(artist + ' - ' + song) + \
@@ -309,9 +315,9 @@ def get_message(bot, update):
             songs = []
             for song_type in ['kpop', 'pop']:
                 c.execute("SELECT song, artist, link FROM {}_song".format(song_type))
-                songs.extend(sorted([song for song in c.fetchall()], key=lambda element:element[0]))
+                songs.extend(sorted([song for song in c.fetchall()], key=lambda element: element[0]))
             song_infos = [song for song in songs if show_dif(song[0].lower(), keyword.lower()) < 0.12 or (
-                        len(keyword.lower()) > 1 and keyword.lower() in song[0].lower())]
+                    len(keyword.lower()) > 1 and keyword.lower() in song[0].lower())]
             for song_info in song_infos:
                 song = song_info[0]
                 artist = song_info[1]
@@ -328,10 +334,12 @@ def get_message(bot, update):
     c.close()
     conn.close()
 
+
 def show_dif(a, b):
     result = difflib.ndiff(a, b)
     result = ''.join(result)
-    return (result.count('+') + result.count('-')) / (len(result)+1)
+    return (result.count('+') + result.count('-')) / (len(result) + 1)
+
 
 def build_menu(buttons, n_cols, header_buttons=None, footer_buttons=None):
     menu = [buttons[i:i + n_cols] for i in range(0, len(buttons), n_cols)]
@@ -340,6 +348,7 @@ def build_menu(buttons, n_cols, header_buttons=None, footer_buttons=None):
     if footer_buttons:
         menu.append(footer_buttons)
     return menu
+
 
 def start(bot, update):
     update.message.reply_text(
@@ -350,11 +359,13 @@ def start(bot, update):
         '드라이브 업로드 폴더를 설정하고 싶으시면 [/drive]를 터치해주세요.\n'
         '도움이 필요하시면 [/help]를 터치해주세요.')
 
+
 def help(bot, update):
     update.message.reply_text(
         '노래를 찾고 싶으시면 [/search]를 터치해주세요.\n'
         '텍스트로 검색하는 방법을 알고 싶으시면 [/command]를 터치해주세요.\n\n'
         '신청 가능한 가수들이 궁금하시면 [/all_artists]를 터치해주세요.')
+
 
 @run_async
 def download_url(bot, update):
@@ -371,13 +382,13 @@ def download_url(bot, update):
         video_file_name = download_youtube(link)
         print(video_file_name)
 
-        if down_type=='동영상':
+        if down_type == '동영상':
             drive_auth = g_auth_bot(update, chat_id)
             if drive_auth:
                 update.callback_query.message.reply_text("{}을(를) 드라이브에 업로드 중입니다.".format(title))
                 upload_get_link(drive_auth, video_file_name, chat_id, permission=False)
                 update.callback_query.message.reply_text("{}을(를) 업로드 완료했습니다.\n"
-                                          "구글 드라이브에서 확인해주세요.".format(title))
+                                                         "구글 드라이브에서 확인해주세요.".format(title))
             else:
                 drive_auth = g_auth_bot(update, 'my')
                 update.callback_query.message.reply_text("인증에 실패하셨습니다.")
@@ -404,7 +415,7 @@ def download_url(bot, update):
                     upload_get_link(drive_auth, music_file_name, chat_id, permission=False)
                     os.unlink(cover)
                     update.callback_query.message.reply_text("{}을(를) 업로드 완료했습니다.\n"
-                                              "구글 드라이브에서 확인해주세요.".format(title))
+                                                             "구글 드라이브에서 확인해주세요.".format(title))
                 else:
                     os.unlink(video_file_name)
                     update.callback_query.message.reply_text("{} 음원 변환에 실패했습니다.\n".format(title))
@@ -424,7 +435,7 @@ def download_url(bot, update):
                     os.unlink(cover)
                     os.unlink(video_file_name)
                     update.callback_query.message.reply_text("{}을(를) 유튜브에서 다운 받았습니다.\n"
-                                              "음원 링크 : {}".format(title, music_drive_link))
+                                                             "음원 링크 : {}".format(title, music_drive_link))
                 else:
                     os.unlink(video_file_name)
                     update.callback_query.message.reply_text("{} 음원 변환에 실패했습니다.\n".format(title))
@@ -432,6 +443,7 @@ def download_url(bot, update):
         bot.edit_message_text(text="유튜브 링크가 올바르지 않습니다.",
                               chat_id=update.callback_query.message.chat_id,
                               message_id=update.callback_query.message.message_id)
+
 
 @run_async
 def itunes_callback(bot, update):
@@ -441,33 +453,11 @@ def itunes_callback(bot, update):
     keyword = data[2]
     track_data = get_track_data(keyword, index=idx)
     title, cover, metadata, lyrics = track_data
+    artist, song = title.split(' - ')
     bot.edit_message_text(text=title + "이 선택되었습니다.",
                           chat_id=update.callback_query.message.chat_id,
                           message_id=update.callback_query.message.message_id)
-    cover = wget.download(cover, out=title + '.jpg')
-    metadata_keys = list(metadata.keys())
-    metadata = [
-        '-metadata' if i % 2 == 0 else (metadata_keys[i // 2] + '=' + str(metadata[metadata_keys[i // 2]])).encode(
-            'utf-8') for i in
-        range(len(metadata) * 2)]
-
-    link = get_youtube_url(title)
-    yt = YouTube(link)
-    file_name = yt.streams.first().download()
-    music = title.replace("/", "") + ".mp3"
-    command = ['ffmpeg', '-i', file_name.encode('utf-8'), '-i', cover.encode('utf-8'), '-acodec', 'libmp3lame', '-b:a',
-               '192k', '-c:v', 'copy',
-               '-map', '0:a:0', '-map', '1:v:0', music.encode('utf-8')]
-    command[11:11] = metadata
-    run(command, stdout=PIPE, stderr=PIPE)
-    if lyrics:
-        print("lyrics exists")
-        audio = ID3(music)
-        audio.add(USLT(text=lyrics))
-        audio.save()
-
-    os.unlink(file_name)
-    os.unlink(cover)
+    music = media_manager.YoutubeUtil(artist=artist, song=song).download_youtube_music_with_only_info(track_data)
 
     drive_auth = g_auth_bot(update, chat_id)
     if drive_auth:
@@ -483,6 +473,7 @@ def itunes_callback(bot, update):
         update.callback_query.message.reply_text("{}을(를) 유튜브에서 다운 받았습니다.\n"
                                                  "음원 링크 : {}".format(title, music_drive_link))
 
+
 @run_async
 def auth(bot, update):
     chat_id = str(update.message['chat']['id'])
@@ -490,6 +481,7 @@ def auth(bot, update):
     if os.path.exists(file):
         os.unlink(file)
     g_auth_bot(update, chat_id)
+
 
 @run_async
 def drive(bot, update):
@@ -506,13 +498,15 @@ def drive(bot, update):
                     'id': folder['id']}
             children.append(data)
         with open('drive_folder.json', 'w') as f:
-            json.dump({'title':'root', 'id':None, 'children':children}, f)
-        titles_show_list = [InlineKeyboardButton(child['title'], callback_data="drive, " + str(i)) for i, child in enumerate(children)]
+            json.dump({'title': 'root', 'id': None, 'children': children}, f)
+        titles_show_list = [InlineKeyboardButton(child['title'], callback_data="drive, " + str(i)) for i, child in
+                            enumerate(children)]
         menu = build_menu(titles_show_list, 3) + [[InlineKeyboardButton("선택", callback_data="drive, " + "선택")]]
         titles_show_markup = InlineKeyboardMarkup(menu)
         update.message.reply_text("어느 폴더에 업로드할 지 선택해주세요.\n", reply_markup=titles_show_markup)
     else:
         update.message.reply_text("인증에 실패하셨습니다")
+
 
 @run_async
 def drive_callback(bot, update):
@@ -543,11 +537,11 @@ def drive_callback(bot, update):
         children = list()
         for folder in folder_list:
             data = {'title': folder['title'],
-                               'id': folder['id']}
+                    'id': folder['id']}
             children.append(data)
         if children:
             with open('drive_folder.json', 'w') as f:
-                json.dump({'title':folder_title, 'id':folder_id, 'children':children}, f)
+                json.dump({'title': folder_title, 'id': folder_id, 'children': children}, f)
             titles_show_list = [InlineKeyboardButton(child['title'], callback_data="drive, " + str(i)) for i, child in
                                 enumerate(children)]
             menu = build_menu(titles_show_list, 3) + [[InlineKeyboardButton('선택', callback_data='drsel')]]
@@ -561,13 +555,14 @@ def drive_callback(bot, update):
             with open('creds/folder_id.json', 'r') as f:
                 data = json.load(f)
             with open('creds/folder_id.json', 'w') as f:
-                data.update({chat_id:folder_id})
+                data.update({chat_id: folder_id})
                 json.dump(data, f)
             bot.edit_message_text(text="{}가 선택되었습니다.".format(folder_title),
                                   chat_id=update.callback_query.message.chat_id,
                                   message_id=update.callback_query.message.message_id)
     else:
         update.message.reply_text("인증에 실패했습니다.")
+
 
 def drive_selected(bot, update):
     chat_id = str(update.callback_query.message.chat_id)
@@ -585,6 +580,7 @@ def drive_selected(bot, update):
                           chat_id=update.callback_query.message.chat_id,
                           message_id=update.callback_query.message.message_id)
 
+
 def command(bot, update):
     update.message.reply_text(
         '노래 검색은 크게 4가지 방법이 있습니다.(데이터베이스 검색, 웹사이트 검색, 유튜브 다운로드, 아이튠즈 음악 정보 검색)\n\n'
@@ -601,18 +597,23 @@ def command(bot, update):
         '[아이튠즈 (검색어)]\n\n'
         '대괄호와 괄호는 구분을 위해 편의상 표시했습니다. 직접 입력하실 때는 제외해주세요.')
 
+
 def melon_chart(bot, update):
     chart = SongDownloadLink()
-    update.message.reply_text("\n".join([str(i)+'. '+j for i, j in enumerate([i+ ' - ' + j for i, j in chart.melon_chart()], start=1)]))
+    update.message.reply_text(
+        "\n".join([str(i) + '. ' + j for i, j in enumerate([i + ' - ' + j for i, j in chart.melon_chart()], start=1)]))
+
 
 def billboard_chart(bot, update):
     chart = SongDownloadLink()
-    update.message.reply_text("\n".join([str(i)+'. '+j for i, j in enumerate(chart.bill_chart(), start=1)]))
+    update.message.reply_text("\n".join([str(i) + '. ' + j for i, j in enumerate(chart.bill_chart(), start=1)]))
+
 
 def new_chart(bot, update):
     new_songs = NewNotice('songs.json')
     update.message.reply_text("\n".join([i + ' - ' + j for i, j in new_songs.get_data('kpop')]))
     update.message.reply_text("\n".join(new_songs.get_data('pop')))
+
 
 def get_all_artists(bot, update):
     conn = sqlite3.connect('user_info.db')
@@ -630,30 +631,34 @@ def get_all_artists(bot, update):
             [get_chosung(artist[0]) if is_hangul(artist[0]) else artist[0].upper() if artist[0].isalpha() else artist[0]
              for artist in kpop_artists])))
 
-    k_artists_by_chosung = ["- " + ', '.join([artist for artist in kpop_artists if startswith(chosung, artist[0])]) for chosung in chosung_list]
+    k_artists_by_chosung = ["- " + ', '.join([artist for artist in kpop_artists if startswith(chosung, artist[0])]) for
+                            chosung in chosung_list]
     k_len = len(k_artists_by_chosung)
-    for artist in [k_artists_by_chosung[k_len//n*j:k_len//n*(j+1)] for j in range(n)]:
+    for artist in [k_artists_by_chosung[k_len // n * j:k_len // n * (j + 1)] for j in range(n)]:
         update.message.reply_text('\n'.join(artist))
-
 
     update.message.reply_text(
         "팝송 가수는  다음과 같이 있습니다.\n"
     )
-    alphabet_list = sorted(list(set([artist[0].upper() if artist[0].isalpha() else artist[0] for artist in pop_artists])))
-    p_artists_by_alphabets = ["- " + ', '.join([artist for artist in pop_artists if startswith(alphabet, artist[0])]) for alphabet in alphabet_list]
+    alphabet_list = sorted(
+        list(set([artist[0].upper() if artist[0].isalpha() else artist[0] for artist in pop_artists])))
+    p_artists_by_alphabets = ["- " + ', '.join([artist for artist in pop_artists if startswith(alphabet, artist[0])])
+                              for alphabet in alphabet_list]
     p_len = len(p_artists_by_alphabets)
     for artist in [p_artists_by_alphabets[p_len // n * j:p_len // n * (j + 1)] for j in range(n)]:
         update.message.reply_text('\n'.join(artist))
 
     update.message.reply_text(
-                    text="다른 서비스를 신청하고 싶으시면 [/help]를 터치해주세요.")
+        text="다른 서비스를 신청하고 싶으시면 [/help]를 터치해주세요.")
 
 
 def search(bot, update):
-    show_list = [InlineKeyboardButton('k-pop', callback_data="artist_han"), InlineKeyboardButton('pop song', callback_data="artist_alph")]
+    show_list = [InlineKeyboardButton('k-pop', callback_data="artist_han"),
+                 InlineKeyboardButton('pop song', callback_data="artist_alph")]
     menu = build_menu(show_list, 1)
     show_markup = InlineKeyboardMarkup(menu)
     update.message.reply_text("찾고 싶은 곡의 종류를 선택해주세요.", reply_markup=show_markup)
+
 
 def kpop_artist_han_callback(bot, update):
     conn = sqlite3.connect('user_info.db')
@@ -663,13 +668,14 @@ def kpop_artist_han_callback(bot, update):
         list(set([get_chosung(artist[0][0]) if is_hangul(artist[0][0]) else artist[0][0].upper() if artist[0][
             0].isalpha() else artist[0][0] for artist in c.fetchall()])))
     chosung_show_list = [InlineKeyboardButton(han, callback_data="st, " + "k-pop, " + han) for han in
-                        chosung_list]
+                         chosung_list]
     menu = build_menu(chosung_show_list, 3)
     chosung_show_markup = InlineKeyboardMarkup(menu)
     bot.edit_message_text(text="알림 받고 싶은 가수의 시작 알파벳을 선택해주세요.",
                           chat_id=update.callback_query.message.chat_id,
                           message_id=update.callback_query.message.message_id,
                           reply_markup=chosung_show_markup)
+
 
 def pop_artist_alph_callback(bot, update):
     conn = sqlite3.connect('user_info.db')
@@ -678,13 +684,15 @@ def pop_artist_alph_callback(bot, update):
     alphabet_list = sorted(
         list(set([artist[0][0].upper() if artist[0][0].isalpha() else artist[0][0] for artist in c.fetchall()])))
 
-    alphabet_show_list = [InlineKeyboardButton(alph, callback_data="st, " + "pop song, " + alph) for alph in alphabet_list]
+    alphabet_show_list = [InlineKeyboardButton(alph, callback_data="st, " + "pop song, " + alph) for alph in
+                          alphabet_list]
     menu = build_menu(alphabet_show_list, 3)
     alphabet_show_markup = InlineKeyboardMarkup(menu)
     bot.edit_message_text(text="알림 받고 싶은 가수의 시작 알파벳을 선택해주세요.",
-                                     chat_id=update.callback_query.message.chat_id,
-                                     message_id=update.callback_query.message.message_id,
-                                     reply_markup=alphabet_show_markup)
+                          chat_id=update.callback_query.message.chat_id,
+                          message_id=update.callback_query.message.message_id,
+                          reply_markup=alphabet_show_markup)
+
 
 def search_type_callback(bot, update):
     data = update.callback_query.data.split(', ')
@@ -699,8 +707,9 @@ def search_type_callback(bot, update):
         artist_option = sorted([artist[0] for artist in c.fetchall() if startswith(han, artist[0][0])])
         artist_show_list = [InlineKeyboardButton(artist, callback_data="secall, kpop, " + artist)
                             for artist in artist_option]
-        menu = build_menu(artist_show_list, 3) +\
-               [[InlineKeyboardButton('이전', callback_data="artist_han")] + [InlineKeyboardButton('선택 취소', callback_data="secall, 선택 취소, 더미")]]
+        menu = build_menu(artist_show_list, 3) + \
+               [[InlineKeyboardButton('이전', callback_data="artist_han")] + [
+                   InlineKeyboardButton('선택 취소', callback_data="secall, 선택 취소, 더미")]]
         artist_show_markup = InlineKeyboardMarkup(menu)
         bot.edit_message_text(text="{}이(가) 선택되었습니다.".format(han),
                               chat_id=update.callback_query.message.chat_id,
@@ -712,8 +721,9 @@ def search_type_callback(bot, update):
         c.execute("SELECT artist FROM pop_artist")
         option_artist = sorted([artist[0] for artist in c.fetchall() if startswith(alph, artist[0][0])])
         show_list = [InlineKeyboardButton(artist, callback_data="secall, pop, " + artist) for artist in option_artist]
-        menu = build_menu(show_list, 3) +\
-               [[InlineKeyboardButton('이전', callback_data="artist_alph")] + [InlineKeyboardButton('선택 취소', callback_data="secall, 선택 취소, 더미")]]
+        menu = build_menu(show_list, 3) + \
+               [[InlineKeyboardButton('이전', callback_data="artist_alph")] + [
+                   InlineKeyboardButton('선택 취소', callback_data="secall, 선택 취소, 더미")]]
         show_markup = InlineKeyboardMarkup(menu)
         bot.edit_message_text(text="{}이(가) 선택되었습니다.".format(alph),
                               chat_id=update.callback_query.message.chat_id,
@@ -721,6 +731,7 @@ def search_type_callback(bot, update):
                               reply_markup=show_markup)
     c.close()
     conn.close()
+
 
 def search_callback(bot, update):
     data = update.callback_query.data.split(', ')
@@ -743,14 +754,17 @@ def search_callback(bot, update):
     conn.close()
     if len(song_infos) > 1:
         artist_id = is_artist(c, song_type, artist)
-        show_list = [InlineKeyboardButton(song_info[2] + ' - ' + song_info[1], callback_data="send, " + song_type + ", " + str(song_info[0])) for song_info in song_infos] \
-                    + [InlineKeyboardButton('get all', callback_data="send, " + song_type + ", " + "get all, " + str(artist_id))]
+        show_list = [InlineKeyboardButton(song_info[2] + ' - ' + song_info[1],
+                                          callback_data="send, " + song_type + ", " + str(song_info[0])) for song_info
+                     in song_infos] \
+                    + [InlineKeyboardButton('get all',
+                                            callback_data="send, " + song_type + ", " + "get all, " + str(artist_id))]
         menu = build_menu(show_list, 1)
         show_markup = InlineKeyboardMarkup(menu)
         bot.edit_message_text(text="{}이(가) 선택되었습니다.".format(artist),
                               chat_id=update.callback_query.message.chat_id,
                               message_id=update.callback_query.message.message_id,
-                              reply_markup = show_markup)
+                              reply_markup=show_markup)
     else:
         song_info = song_infos[0]
         song = song_info[1]
@@ -766,6 +780,7 @@ def search_callback(bot, update):
         bot.sendMessage(chat_id=update.callback_query.message.chat_id,
                         text="다시 검색하시려면 [/search]를 터치해주세요."
                              "다른 서비스를 신청하고 싶으시면 [/help]를 터치해주세요.")
+
 
 def send_callback(bot, update):
     data = update.callback_query.data.split(', ')
@@ -807,7 +822,6 @@ def send_callback(bot, update):
     conn.close()
 
 
-
 def get_chosung(word):
     chosung = ['ㄱ', 'ㄲ', 'ㄴ', 'ㄷ', 'ㄸ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅃ', 'ㅅ',
                'ㅆ', 'ㅇ', 'ㅈ', 'ㅉ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ']
@@ -816,10 +830,15 @@ def get_chosung(word):
         cho = cc // (21 * 28)
         return chosung[cho]
 
+
 def is_hangul(word):
     hangul_re = re.compile(r"[ㄱ - | 가-힣]")
     return hangul_re.search(word) is not None
+
+
 from string import punctuation
+
+
 def startswith(pattern, word):
     if pattern in punctuation:
         pattern = "\\" + pattern
@@ -827,7 +846,8 @@ def startswith(pattern, word):
         word = get_chosung(word)
     return re.match(pattern, word, re.I)
 
-if __name__=='__main__':
+
+if __name__ == '__main__':
     token = '751248768:AAEJB5JcAh52nWfrSyKTEISGX8_teJIxNFw'
     # token = "790146878:AAFKnWCnBV9WMSMYPnfcRXukmftgDyV_BlY" #this is a test bot
 

@@ -1,12 +1,13 @@
 import os
 import json
 
+
 class NewNotice:
     def __init__(self, json_file):
         self.filename = json_file
         if not os.path.exists(self.filename):
             with open(self.filename, 'w') as f:
-                json.dump({'default_key':'default_value'}, f)
+                json.dump({'default_key': 'default_value'}, f)
         with open(self.filename, 'r') as f:
             self.old_data = json.load(f)
             self.old_data.pop('default_key', None)
