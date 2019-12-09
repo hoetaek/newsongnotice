@@ -54,14 +54,14 @@ def start_voting(users):
     for i, user in enumerate(users, start=1):
         usr, pw = user
         print(i, usr, pw)
-        vote(usr, pw, 'https://ssam.teacherville.co.kr/?mode=event.schoolstarts&sub=teacher&keyword=울독송')
-        time.sleep(random.randint(2, 10))
+        # vote(usr, pw, 'https://ssam.teacherville.co.kr/?mode=event.schoolstarts&sub=teacher&keyword=울독송')
+        # time.sleep(random.randint(2, 10))
         vote(usr, pw, 'https://ssam.teacherville.co.kr/?mode=event.schoolstarts&sub=teacher&keyword=흥딩스쿨')
-        time.sleep(random.randint(2, 10))
-        vote(usr, pw, 'https://ssam.teacherville.co.kr/?mode=event.schoolstarts&sub=teacher&keyword=교사에대하여')
-        time.sleep(random.randint(2, 10))
-        if i % 3 == 0:
-            t = random.randint(600, 800)
-            print(time.localtime())
-            print(f"{t//60}분 동안 쉬어갑니다~")
-            time.sleep(t)
+        # time.sleep(random.randint(2, 10))
+        # vote(usr, pw, 'https://ssam.teacherville.co.kr/?mode=event.schoolstarts&sub=teacher&keyword=교사에대하여')
+        # time.sleep(random.randint(2, 10))
+        # if i % 3 == 0:
+        #     t = random.randint(600, 800)
+        #     print(time.localtime())
+        #     print(f"{t//60}분 동안 쉬어갑니다~")
+        #     time.sleep(t)
