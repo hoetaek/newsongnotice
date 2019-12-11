@@ -58,10 +58,10 @@ def start_voting(users):
         time.sleep(random.randint(2, 10))
         vote(usr, pw, 'https://ssam.teacherville.co.kr/?mode=event.schoolstarts&sub=teacher&keyword=흥딩스쿨')
         time.sleep(random.randint(2, 10))
-        # vote(usr, pw, 'https://ssam.teacherville.co.kr/?mode=event.schoolstarts&sub=teacher&keyword=교사에대하여')
-        # time.sleep(random.randint(2, 10))
-        # if i % 3 == 0:
-        #     t = random.randint(300, 600)
-        #     print(time.localtime())
-        #     print(f"{t//60}분 동안 쉬어갑니다~")
-        #     time.sleep(t)
+        vote(usr, pw, 'https://ssam.teacherville.co.kr/?mode=event.schoolstarts&sub=teacher&keyword=교사에대하여')
+        time.sleep(random.randint(2, 10))
+        if i % 3 == 0:
+            t = random.randint(300, 600)
+            print(time.localtime())
+            print(f"{t//60}분 동안 쉬어갑니다~")
+            time.sleep(t)
