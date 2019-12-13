@@ -844,8 +844,6 @@ if __name__ == '__main__':
     updater.dispatcher.add_handler(CommandHandler('command', command))
     updater.dispatcher.add_handler(CommandHandler('all_artists', get_all_artists))
     updater.dispatcher.add_handler(CommandHandler('search', search))
-    updater.dispatcher.add_handler(CommandHandler('melon', melon_chart))
-    updater.dispatcher.add_handler(CommandHandler('bill', billboard_chart))
     updater.dispatcher.add_handler(CommandHandler('new_chart', new_chart))
 
     updater.dispatcher.add_handler(CallbackQueryHandler(drive_callback,
