@@ -12,7 +12,6 @@ from telegram.error import NetworkError
 from make_db import get_user_list, insert_song, is_song
 from music_file import download_mega_link, download_youtube_link, g_auth, upload_get_link, get_youtube_url
 from new_data_manager import NewNotice
-from server import change_ip
 
 def get_pop_100():
     latest_path = os.path.join(BASE_DIR, 'latest.json')
@@ -325,7 +324,6 @@ class SongDownloadLink():
                         return
                     elif err.endswith("returned 509"):
                         print("change the ip of the server and try again")
-                        change_ip()
                         bot.sendMessage(chat_id="580916113",
                                         text="change the ip of the server and try again\n" + str(err))
                         self.get_download_link(song_info, search=search)
@@ -352,7 +350,6 @@ class SongDownloadLink():
                         return
                     elif err.endswith("returned 509"):
                         print("change the ip of the server and try again")
-                        change_ip()
                         bot.sendMessage(chat_id="580916113",
                                         text="change the ip of the server and try again\n" + str(err))
                         self.get_download_link(song_info, search=search)

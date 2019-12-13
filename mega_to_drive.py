@@ -1,7 +1,6 @@
 import sqlite3
 from music_file import download_mega_link, upload_get_link, download_youtube_link
 import schedule, time, os
-from server import change_ip
 from telegram import Bot
 from telegram.error import NetworkError
 
@@ -37,7 +36,6 @@ def get_mega_file(link, song="", artist=""):
 
         elif err.endswith("returned 509"):
             print("change the ip of the server and try again")
-            change_ip()
             bot.sendMessage(chat_id="580916113",
                             text="change the ip of the server and try again\n" + str(err))
             return get_mega_file(link)

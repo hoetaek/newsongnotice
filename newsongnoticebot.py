@@ -3,7 +3,7 @@ from telegram.ext import Updater, MessageHandler, CommandHandler, CallbackQueryH
 from pydrive.drive import GoogleDrive
 import sqlite3, json
 from make_db import is_artist, insert_song, get_song_list
-from new_song_crawl import SongDownloadLink, get_youtube_url
+from new_song_crawl import get_youtube_url
 from music_file import g_auth, g_auth_bot, upload_get_link, download_youtube, download_youtube_link, get_track_data, \
     list_folder
 import media_manager
@@ -28,14 +28,6 @@ def get_message(bot, update):
         file_name = 'gauth_code.json'
         with open(file_name, 'w') as f:
             json.dump({chat_id: text}, f)
-
-    if text.startswith("검색"):
-        keyword = text[2:].strip()
-        if keyword:
-            update.message.reply_text(keyword + "을(를) 검색 중입니다.")
-            chrome = SongDownloadLink()
-            chrome.crawl_keyword_list(keyword, chat_id)
-            update.message.reply_text("다른 서비스를 신청하고 싶으시면 [/help]를 터치해주세요.")
 
     elif text.startswith("유튜브"):
         keyword = text[3:].strip().split(' ')
@@ -596,17 +588,6 @@ def command(bot, update):
         '4. 아이튠즈에서 노래나 가수의 정보를 토대로 여러 곡을 검색할 수 있습니다\n'
         '[아이튠즈 (검색어)]\n\n'
         '대괄호와 괄호는 구분을 위해 편의상 표시했습니다. 직접 입력하실 때는 제외해주세요.')
-
-
-def melon_chart(bot, update):
-    chart = SongDownloadLink()
-    update.message.reply_text(
-        "\n".join([str(i) + '. ' + j for i, j in enumerate([i + ' - ' + j for i, j in chart.melon_chart()], start=1)]))
-
-
-def billboard_chart(bot, update):
-    chart = SongDownloadLink()
-    update.message.reply_text("\n".join([str(i) + '. ' + j for i, j in enumerate(chart.bill_chart(), start=1)]))
 
 
 def new_chart(bot, update):
