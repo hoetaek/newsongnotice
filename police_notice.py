@@ -29,15 +29,35 @@ params = (
 )
 
 data = {
-  'ntcrNm': '\uC11C\uC6B8\uC9C0\uBC29\uACBD\uCC30\uCCAD',
-  'searchCnd': '1',
-  'searchWrd': '',
-  'x': '15',
-  'y': '12'
+    'ntcrNm': '\uC11C\uC6B8\uC9C0\uBC29\uACBD\uCC30\uCCAD',
+    'searchCnd': '1',
+    'searchWrd': '',
+    'x': '15',
+    'y': '12'
 }
 
+
+def check_military_recruit_update():
+    res = requests.get("http://www.mma.go.kr/contents.do?mc=mma0000743")
+    html = res.text
+    soup = BeautifulSoup(html, 'html.parser')
+    notice_title = soup.select("table")
+    print(str(notice_title[0]))
+    # if NewNotice('others.json').compare_data("military_notice", [notice_title[0]]):
+    #     chat_ids = [580916113]
+    #     for chat_id in chat_ids:
+    #         token = '751248768:AAEJB5JcAh52nWfrSyKTEISGX8_teJIxNFw'
+    #         bot = Bot(token=token)
+    #         message = str(notice_title[0]) + "<a href=\"{}\">{}</a>".format("http://www.mma.go.kr/contents.do?mc=mma0000743",
+    #                                                                    "군모집계획")
+    #         bot.send_message(chat_id=chat_id,
+    #                          parse_mode="HTML",
+    #                          text="군 관련 새로운 공지가 있습니다.\n\n" + message)
+
+
 def check_police_update():
-    response = requests.post('https://ap.police.go.kr/ap/bbs/list.do', headers=headers, params=params, cookies=cookies, data=data)
+    response = requests.post('https://ap.police.go.kr/ap/bbs/list.do', headers=headers, params=params, cookies=cookies,
+                             data=data)
     html = response.text
     soup = BeautifulSoup(html, 'html.parser')
     notice_title = [a.text for a in soup.select("td.tl > a")]
@@ -56,8 +76,9 @@ def check_police_update():
                 messages.append("<a href=\"{}\">{}</a>".format(link, message.replace("<", "").replace(">", "")))
             bot.send_message(chat_id=chat_id,
                              parse_mode="HTML",
-                             text ="의경 관련 새로운 공지가 있습니다.\n\n" +
-                                   "\n".join(messages))
+                             text="의경 관련 새로운 공지가 있습니다.\n\n" +
+                                  "\n".join(messages))
+
 
 def check_snue_update():
     response = requests.post("http://portal.snue.ac.kr/enview/board/list.brd?boardId=graduate_notice")
@@ -84,6 +105,7 @@ def check_snue_update():
                              text="서울교대 새로운 학사공지가 있습니다.\n\n" +
                                   "\n".join(messages))
 
+
 def check_lost_found():
     res = requests.get("http://115.84.165.106/admin/find_list.jsp")
     html = res.text
@@ -108,15 +130,15 @@ def check_lost_found():
                               "\n".join(messages))
 
 
-if __name__=='__main__':
+if __name__ == '__main__':
     check_police_update()
     check_snue_update()
-    # check_lost_found()
+    check_military_recruit_update()
 
-    schedule.every(3).hours.do(check_police_update)
-    schedule.every(3).hours.do(check_snue_update)
-    # schedule.every(30).minutes.do(check_lost_found)
-
-    while True:
-        schedule.run_pending()
-        time.sleep(1)
+    # schedule.every(3).hours.do(check_police_update)
+    # schedule.every(3).hours.do(check_snue_update)
+    # schedule.every(3).hours.do(check_military_recruit_update)
+    #
+    # while True:
+    #     schedule.run_pending()
+    #     time.sleep(1)

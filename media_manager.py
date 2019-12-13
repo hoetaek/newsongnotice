@@ -164,7 +164,7 @@ class YoutubeUtil:
         self.link = link
 
     def get_song_link(self, limit=1):
-        url = 'https://www.youtube.com/results?search_query=' + urllib.parse.quote_plus(self.artist + ' - ' + self.song)
+        url = 'https://www.youtube.com/results?search_query=' + urllib.parse.quote_plus(self.artist + ' - ' + self.song + ' audio')
         response = requests.get(url)
         html = response.text
         soup = BeautifulSoup(html, 'html.parser')
@@ -366,5 +366,4 @@ def list_folder(drive, id):
 
 
 if __name__ == '__main__':
-    yt = YoutubeUtil(song='안녕 (드라마"호텔 델루나")', artist='폴킴')
-    print(yt.download_youtube_music_with_no_link())
+    yt = YoutubeUtil(link="https://www.youtube.com/playlist?list=PL4cUxeGkcC9j--TKIdkb3ISfRbJeJYQwC").download_youtube_playlist()
