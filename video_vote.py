@@ -18,7 +18,7 @@ def close_popup(driver):
 
 def vote(usr, pw, url):
     options = webdriver.ChromeOptions()
-    # options.add_argument('headless')
+    options.add_argument('headless')
     options.add_argument('window-size=1920x1080')
     options.add_argument("disable-gpu")
     options.add_argument("--disable-notifications")
@@ -53,7 +53,6 @@ def vote(usr, pw, url):
 
 
 def start_voting(users):
-    users.reverse()
     for i, user in enumerate(users, start=1):
         usr, pw = user
         print(i, usr, pw)
