@@ -65,5 +65,4 @@ if __name__ == "__main__":
             video_filename = post_name + ".mp4"
             wget.download(video_url, out=video_filename)
             upload_get_link(gauth, video_filename)
-            break
-        break
+
