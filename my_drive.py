@@ -12,7 +12,7 @@ import re
 
 def upload_get_link(gauth, file_path):
     drive = GoogleDrive(gauth)
-    folder_id = '1k2zDvpvahgfifOj9MMLPAytBZ9rzcTxK'
+    folder_id = '1iU1N2klX3-ksCjS-4nhKIC8EaZ4EwxtZ'
     upload_file = drive.CreateFile({"parents": [{"kind": "drive#fileLink", "id": folder_id}]})
     upload_file.SetContentFile(file_path)
     upload_file.Upload()
@@ -31,10 +31,7 @@ if __name__ == "__main__":
     gauth.LoadCredentialsFile(os.path.join("creds", "580916113" + "creds.txt"))
 
     urls = [
-        "https://home.ebs.co.kr/docuprime/replay/2/list?c.page=1&searchKeywordValue=0&orderBy=NEW&searchConditionValue=0&courseId=BP0PAPB0000000005&vodSort=NEW&searchStartDtValue=0&brdcDsCdFilter=RUN&searchKeyword=&userId=&searchEndDt=&searchCondition=&searchEndDtValue=0&stepId=02BP0PAPB0000000005&searchStartDt=&",
-        "https://home.ebs.co.kr/docuprime/replay/2/list?c.page=2&searchKeywordValue=0&orderBy=NEW&searchConditionValue=0&vodSort=NEW&courseId=BP0PAPB0000000005&searchStartDtValue=0&brdcDsCdFilter=RUN&userId=&searchKeyword=&searchCondition=&searchEndDt=&searchEndDtValue=0&stepId=02BP0PAPB0000000005&searchStartDt=&",
-        "https://home.ebs.co.kr/docuprime/replay/2/list?c.page=3&searchKeywordValue=0&orderBy=NEW&searchConditionValue=0&courseId=BP0PAPB0000000005&vodSort=NEW&searchStartDtValue=0&brdcDsCdFilter=RUN&searchKeyword=&userId=&searchEndDt=&searchCondition=&searchEndDtValue=0&stepId=02BP0PAPB0000000005&searchStartDt=&",
-        "https://home.ebs.co.kr/docuprime/replay/2/list?c.page=4&searchKeywordValue=0&orderBy=NEW&searchConditionValue=0&vodSort=NEW&courseId=BP0PAPB0000000005&searchStartDtValue=0&brdcDsCdFilter=RUN&userId=&searchKeyword=&searchCondition=&searchEndDt=&searchEndDtValue=0&stepId=02BP0PAPB0000000005&searchStartDt=&",
+        "https://home.ebs.co.kr/knowledge_joy/replay/11/list?courseId=10204062&stepId=20005402",
     ]
 
     for url in urls:
@@ -45,7 +42,7 @@ if __name__ == "__main__":
         posts = [i for i in soup.select("div > strong > a")]
         post_urls = []
 
-        post_url_format = "https://www.ebs.co.kr/tv/show?prodId=7503&lectId={}"
+        post_url_format = "https://www.ebs.co.kr/tv/show?prodId=132491&lectId={}"
         for post in posts:
             onclick = post['onclick']
             url_num = re.findall(r"\D(\d{8})\D", onclick)[0]
