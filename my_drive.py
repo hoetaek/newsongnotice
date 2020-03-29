@@ -65,3 +65,4 @@ if __name__ == "__main__":
             video_filename = '{}_'.format(str(index).zfill(3)) + re.sub('/', '-', post_name) + ".mp3"
             wget.download(video_url, out=video_filename)
             upload_get_link(gauth, video_filename)
+            index = index + 1
