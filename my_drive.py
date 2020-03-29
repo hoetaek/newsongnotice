@@ -62,7 +62,6 @@ if __name__ == "__main__":
             driver.quit()
             soup = BeautifulSoup(html, 'html.parser')
             video_url = soup.find("audio").get("src")
-            video_filename = '{}_'.format(str(index).zfill(3)) + post_name + ".mp3"
+            video_filename = '{}_'.format(str(index).zfill(3)) + re.sub('/', '-', post_name) + ".mp3"
             wget.download(video_url, out=video_filename)
             upload_get_link(gauth, video_filename)
-
