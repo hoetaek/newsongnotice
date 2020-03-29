@@ -12,7 +12,7 @@ import re
 
 def upload_get_link(gauth, file_path):
     drive = GoogleDrive(gauth)
-    folder_id = '17z_QHy1Bf9QKVfGyjCidH0uNDQe171Z3'
+    folder_id = '1NPk7wY2exv8Sa5Gxu5iTT4f2jirz9EgA'
     upload_file = drive.CreateFile({"parents": [{"kind": "drive#fileLink", "id": folder_id}]})
     upload_file.SetContentFile(file_path)
     upload_file.Upload()
@@ -31,10 +31,11 @@ if __name__ == "__main__":
     gauth.LoadCredentialsFile(os.path.join("creds", "580916113" + "creds.txt"))
 
     urls = [
-        "https://home.ebs.co.kr/docuprime/replay/2/list?c.page=2&searchKeywordValue=0&orderBy=NEW&searchConditionValue=0&vodSort=NEW&courseId=BP0PAPB0000000005&searchStartDtValue=0&brdcDsCdFilter=RUN&userId=&searchKeyword=&searchCondition=&searchEndDt=&searchEndDtValue=0&stepId=02BP0PAPB0000000005&searchStartDt=&",
-        "https://home.ebs.co.kr/docuprime/replay/2/list?c.page=3&searchKeywordValue=0&orderBy=NEW&searchConditionValue=0&courseId=BP0PAPB0000000005&vodSort=NEW&searchStartDtValue=0&brdcDsCdFilter=RUN&searchKeyword=&userId=&searchEndDt=&searchCondition=&searchEndDtValue=0&stepId=02BP0PAPB0000000005&searchStartDt=&",
-        "https://home.ebs.co.kr/docuprime/replay/2/list?c.page=4&searchKeywordValue=0&orderBy=NEW&searchConditionValue=0&vodSort=NEW&courseId=BP0PAPB0000000005&searchStartDtValue=0&brdcDsCdFilter=RUN&userId=&searchKeyword=&searchCondition=&searchEndDt=&searchEndDtValue=0&stepId=02BP0PAPB0000000005&searchStartDt=&",
+        "https://home.ebs.co.kr/speakinge/replay/4/list?c.page={}&searchKeywordValue=0&orderBy=NEW&searchConditionValue=0&courseId=BK0KAKC0000000014&vodSort=NEW&searchStartDtValue=0&brdcDsCdFilter=RUN&searchKeyword=&userId=&searchEndDt=&searchCondition=&searchEndDtValue=0&stepId=01BK0KAKC0000000014&searchStartDt=&".format(
+            i + 1) for i in range(11)
     ]
+
+    index = 1
 
     for url in urls:
         res = requests.get(url)
@@ -44,11 +45,12 @@ if __name__ == "__main__":
         posts = [i for i in soup.select("div > strong > a")]
         post_urls = []
 
-        post_url_format = "https://www.ebs.co.kr/tv/show?prodId=7503&lectId={}"
+        post_url_format = "https://home.ebs.co.kr/speakinge/replay/4/view?courseId=BK0KAKC0000000014&stepId=01BK0KAKC0000000014&prodId=200&pageNo=1&lectId={}&lectNm=&bsktPchsYn=&prodDetlId=&oderProdClsCd=&prodFig=&vod=A&oderProdDetlClsCd="
         for post in posts:
             onclick = post['onclick']
             url_num = re.findall(r"\D(\d{7,9})\D", onclick)[0]
             post_urls.append([post.text, post_url_format.format(url_num)])
+        # print(post_urls)
         for post_name, post_url in post_urls:
             options = webdriver.ChromeOptions()
             options.add_argument('headless')
@@ -59,7 +61,8 @@ if __name__ == "__main__":
             html = driver.page_source
             driver.quit()
             soup = BeautifulSoup(html, 'html.parser')
-            video_url = soup.find("video").get("src")
-            video_filename = post_name + ".mp4"
+            video_url = soup.find("audio").get("src")
+            video_filename = '{}_'.format(str(index).zfill(3)) + post_name + ".mp3"
             wget.download(video_url, out=video_filename)
             upload_get_link(gauth, video_filename)
+
