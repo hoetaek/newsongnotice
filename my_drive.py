@@ -10,9 +10,11 @@ import wget
 import re
 
 
-def upload_get_link(gauth, file_path):
+def upload_get_link(file_path):
+    gauth = GoogleAuth()
+    gauth.LoadCredentialsFile(os.path.join("creds", "580916113" + "creds.txt"))
     drive = GoogleDrive(gauth)
-    folder_id = '1NPk7wY2exv8Sa5Gxu5iTT4f2jirz9EgA'
+    folder_id = '1mdhwYzDVeu5cjJD-GDwLlSLMV7qkwPXT'
     upload_file = drive.CreateFile({"parents": [{"kind": "drive#fileLink", "id": folder_id}]})
     upload_file.SetContentFile(file_path)
     upload_file.Upload()
@@ -27,8 +29,7 @@ def list_folder(drive, id):
 
 
 if __name__ == "__main__":
-    gauth = GoogleAuth()
-    gauth.LoadCredentialsFile(os.path.join("creds", "580916113" + "creds.txt"))
+
 
     urls = [
         "https://home.ebs.co.kr/speakinge/replay/4/list?c.page={}&searchKeywordValue=0&orderBy=NEW&searchConditionValue=0&courseId=BK0KAKC0000000014&vodSort=NEW&searchStartDtValue=0&brdcDsCdFilter=RUN&searchKeyword=&userId=&searchEndDt=&searchCondition=&searchEndDtValue=0&stepId=01BK0KAKC0000000014&searchStartDt=&".format(

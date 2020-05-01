@@ -322,40 +322,18 @@ def g_auth_bot(update, chat_id):
     return gauth
 
 
-def upload_get_link(gauth, file_path, chat_id, permission=True, playlist=""):
+def upload_get_link(file_path, type='music'):
+    gauth = GoogleAuth()
+    gauth.LoadCredentialsFile(os.path.join("creds", "580916113" + "creds.txt"))
     drive = GoogleDrive(gauth)
-    folder_id = ''
-    with open('creds/folder_id.json', 'r') as f:
-        data = json.load(f)
-        if chat_id in data.keys():
-            folder_id = data[chat_id]
-    if folder_id:
-        if playlist:
-            folders = list_folder(drive, folder_id)
-            playlist_folder_id = [folder['id'] for folder in folders if folder['title'] == playlist]
-            if not playlist_folder_id:
-                folder = drive.CreateFile({'title': playlist, "parents": [{"id": folder_id}],
-                                           "mimeType": "application/vnd.google-apps.folder"})
-                folder.Upload()
-                folder_id = folder['id']
-            else:
-                folder_id = playlist_folder_id[0]
-            upload_file = drive.CreateFile({"parents": [{"kind": "drive#fileLink", "id": folder_id}]})
-        else:
-            upload_file = drive.CreateFile({"parents": [{"kind": "drive#fileLink", "id": folder_id}]})
+    if type == 'music':
+        folder_id = '1mdhwYzDVeu5cjJD-GDwLlSLMV7qkwPXT'
     else:
-        upload_file = drive.CreateFile()
+        folder_id = '1TFhvoThtLGVlZXPLEa3ACPOvLxxAWSLK'
+    upload_file = drive.CreateFile({"parents": [{"kind": "drive#fileLink", "id": folder_id}]})
     upload_file.SetContentFile(file_path)
     upload_file.Upload()
     os.unlink(file_path)
-    if permission:
-        upload_file.InsertPermission({
-            'type': 'anyone',
-            'value': 'anyone',
-            'role': 'reader'})
-        return upload_file['alternateLink']
-    else:
-        return
 
 
 def list_folder(drive, id):
@@ -366,4 +344,4 @@ def list_folder(drive, id):
 
 
 if __name__ == '__main__':
-    yt = YoutubeUtil(link="https://www.youtube.com/playlist?list=PL4cUxeGkcC9j--TKIdkb3ISfRbJeJYQwC").download_youtube_playlist()
+    yt = YoutubeUtil(link="https://www.youtube.com/watch?v=-u5gsBF9wbY").download_youtube_music()

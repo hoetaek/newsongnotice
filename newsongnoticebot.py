@@ -2,18 +2,13 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Bot
 from telegram.ext import Updater, MessageHandler, CommandHandler, CallbackQueryHandler, Filters
 from pydrive.drive import GoogleDrive
 import sqlite3, json
-from make_db import is_artist, insert_song, get_song_list
-from new_song_crawl import get_youtube_url
-from music_file import g_auth, g_auth_bot, upload_get_link, download_youtube, download_youtube_link, get_track_data, \
-    list_folder
+from make_db import is_artist, get_song_list
+from media_manager import g_auth_bot, upload_get_link, list_folder
 import media_manager
 from new_data_manager import NewNotice
 from telegram.ext.dispatcher import run_async
-from pytube import YouTube, Playlist
-from pytube.exceptions import RegexMatchError, VideoUnavailable
-import os, re, difflib, subprocess, wget
-from subprocess import run, PIPE
-from mutagen.id3 import ID3, USLT
+
+import os, re, difflib
 import requests
 from bs4 import BeautifulSoup
 
@@ -22,186 +17,10 @@ from bs4 import BeautifulSoup
 def get_message(bot, update):
     chat_id = str(update.message['chat']['id'])
     text = update.message.text
-    conn = sqlite3.connect("user_info.db")
-    c = conn.cursor()
     if len(text) == 57:
         file_name = 'gauth_code.json'
         with open(file_name, 'w') as f:
             json.dump({chat_id: text}, f)
-
-    elif text.startswith("유튜브"):
-        keyword = text[3:].strip().split(' ')
-        song_type = keyword[0]
-        if song_type == 'pop' or song_type == 'kpop':
-            try:
-                song, artist = ' '.join(keyword[1:]).split('/')
-            except IndexError:
-                update.message.reply_text("가수/노래 형식으로 입력해주세요.")
-                return
-            update.message.reply_text(artist + ' ' + song + "을(를) 유튜브에서 다운 받는 중입니다.\n곡이 데이터베이스에 저장됩니다.")
-            file = download_youtube_link(song, artist)
-            drive_auth = g_auth("my")
-            update.message.reply_text(artist + ' ' + song + "을(를) 드라이브에 업로드 중입니다.")
-            link = upload_get_link(drive_auth, file, "")
-            insert_song(c, song_type, [song, artist, link])
-            bot.sendMessage(chat_id=chat_id,
-                            text="곡 : " + artist + ' - ' + song + \
-                                 '\n유튜브 링크 : ' + get_youtube_url(artist + ' - ' + song) + \
-                                 '\n다운로드 링크 : ' + link + "\n\n")
-            update.message.reply_text("다른 서비스를 신청하고 싶으시면 [/help]를 터치해주세요.")
-
-        elif '/' in ' '.join(keyword):
-            song, artist = ' '.join(keyword).split('/')
-            update.message.reply_text(artist + ' ' + song + "을(를) 유튜브에서 다운 받는 중입니다.\n곡이 데이터베이스에 저장되지 않습니다.")
-            file = download_youtube_link(song, artist)
-            drive_auth = g_auth_bot(update, chat_id)
-            if drive_auth:
-                update.message.reply_text(artist + ' ' + song + "을(를) 드라이브에 업로드 중입니다.")
-                upload_get_link(drive_auth, file, chat_id, permission=False)
-                bot.sendMessage(chat_id=chat_id,
-                                text="곡 : " + artist + ' - ' + song + \
-                                     '\n유튜브 링크 : ' + get_youtube_url(artist + ' - ' + song))
-                update.message.reply_text("다른 서비스를 신청하고 싶으시면 [/help]를 터치해주세요.")
-            else:
-                drive_auth = g_auth_bot(update, 'my')
-                update.message.reply_text("인증에 실패하셨습니다.")
-                link = upload_get_link(drive_auth, file, chat_id)
-                bot.sendMessage(chat_id=chat_id,
-                                text="곡 : " + artist + ' - ' + song + \
-                                     '\n유튜브 링크 : ' + get_youtube_url(artist + ' - ' + song) + \
-                                     '\n다운로드 링크 : ' + link + "\n\n")
-                update.message.reply_text("다른 서비스를 신청하고 싶으시면 [/help]를 터치해주세요.")
-
-        elif song_type == '음원':
-            keyword = ' '.join(keyword[1:])
-            update.message.reply_text("{}을(를) 유튜브에서 검색중입니다.".format(keyword))
-            if keyword.startswith('http'):
-                link = keyword
-            else:
-                link = get_youtube_url(keyword)
-            yt = YouTube(link)
-            title = yt.title
-            update.message.reply_text("{}을(를) 유튜브에서 다운 받는 중입니다.".format(title))
-            video_file_name = yt.streams.first().download()
-            video_file_name = os.path.basename(video_file_name)
-
-            drive_auth = g_auth_bot(update, chat_id)
-            if drive_auth:
-                update.message.reply_text("{}을(를) 음원으로 변환 중입니다.".format(title))
-                if video_file_name.endswith('mp4'):
-                    music_file_name = video_file_name[:-1] + '3'
-                    cover = wget.download(yt.thumbnail_url)
-                    command = ['ffmpeg', '-i', video_file_name.encode('utf-8'), '-i', cover.encode('utf-8'), '-acodec',
-                               'libmp3lame',
-                               '-b:a', '192k', '-c:v', 'copy', '-map', '0:a:0', '-map', '1:v:0',
-                               music_file_name.encode('utf-8')]
-                    subprocess.call(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                    os.unlink(video_file_name)
-                    update.message.reply_text("{}을(를) 업로드 중입니다.".format(title))
-                    upload_get_link(drive_auth, music_file_name, chat_id, permission=False)
-                    os.unlink(cover)
-                    update.message.reply_text("{}을(를) 업로드 완료했습니다.\n"
-                                              "구글 드라이브에서 확인해주세요.".format(title))
-                else:
-                    os.unlink(video_file_name)
-                    update.message.reply_text("{} 음원 변환에 실패했습니다.\n".format(title))
-            else:
-                drive_auth = g_auth_bot(update, 'my')
-                update.message.reply_text("인증에 실패하셨습니다.")
-                if video_file_name.endswith('mp4'):
-                    music_file_name = video_file_name[:-1] + '3'
-                    cover = wget.download(yt.thumbnail_url)
-                    command = ['ffmpeg', '-i', video_file_name.encode('utf-8'), '-i', cover.encode('utf-8'), '-acodec',
-                               'libmp3lame',
-                               '-b:a', '192k', '-c:v', 'copy', '-map', '0:a:0', '-map', '1:v:0',
-                               music_file_name.encode('utf-8')]
-                    subprocess.call(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                    update.message.reply_text("{}을(를) 업로드 중입니다.".format(title))
-                    music_drive_link = upload_get_link(drive_auth, music_file_name, chat_id)
-                    os.unlink(cover)
-                    os.unlink(video_file_name)
-                    update.message.reply_text("{}을(를) 유튜브에서 다운 받았습니다.\n"
-                                              "음원 링크 : {}".format(title, music_drive_link))
-                else:
-                    os.unlink(video_file_name)
-                    update.message.reply_text("{} 음원 변환에 실패했습니다.\n".format(title))
-
-        else:
-            keyword = ' '.join(keyword).strip()
-            if keyword.startswith('http'):
-                link = keyword
-                yt = YouTube(link)
-                title = yt.title
-                update.message.reply_text("{}을(를) 유튜브에서 다운 받는 중입니다.".format(title))
-                video_file_name = download_youtube(link)
-                drive_auth = g_auth_bot(update, chat_id)
-                if drive_auth:
-                    update.message.reply_text("{}을(를) 드라이브에 업로드 중입니다.".format(title))
-                    upload_get_link(drive_auth, video_file_name, chat_id, permission=False)
-                    update.message.reply_text("{}을(를) 업로드 완료했습니다.\n"
-                                              "구글 드라이브에서 확인해주세요.".format(title))
-                else:
-                    drive_auth = g_auth_bot(update, 'my')
-                    update.message.reply_text("인증에 실패하셨습니다.")
-                    update.message.reply_text("{}을(를) 드라이브에 업로드 중입니다.".format(title))
-                    video_drive_link = upload_get_link(drive_auth, video_file_name, chat_id)
-                    update.message.reply_text("{}을(를) 업로드 완료했습니다.\n"
-                                              "동영상 링크 : {}".format(title, video_drive_link))
-            else:
-                limit = 5
-                if keyword.startswith('#'):
-                    keyword = keyword.split()
-                    try:
-                        limit = int(keyword[0][1:])
-                        keyword = ' '.join(keyword[1:])
-                    except ValueError:
-                        keyword = ' '.join(keyword[1:])
-                update.message.reply_text("{}을(를) 유튜브에서 검색중입니다.".format(keyword))
-                links = get_youtube_url(keyword, limit=limit)
-                for link in links:
-                    bot.sendMessage(text=link,
-                                    chat_id=chat_id)
-
-    elif text.startswith("https://www.youtube.com/playlist"):
-        playlist_link = text
-        print("Start playlist download", playlist_link)
-        plist = Playlist(playlist_link)
-        plist.populate_video_urls()
-        urls = plist.video_urls
-        if urls:
-            res = requests.get(text)
-            html = res.text
-            soup = BeautifulSoup(html, 'html.parser')
-            plist_title = soup.select("h1.pl-header-title")[0].text
-            plist_title = ''.join(plist_title.splitlines()).strip()
-            print("Playlist title", plist_title)
-            for i, url in zip(["%.2d" % i for i in range(len(urls))], urls):
-                try:
-                    yt = YouTube(url)
-                except VideoUnavailable:
-                    update.message.reply_text("영상을 다운 받을 수 없습니다. 성인인증이 필요한 영상일 수 있습니다.\n" + url)
-                    continue
-                title = yt.title
-                update.message.reply_text("{}을(를) 유튜브에서 다운 받는 중입니다.".format(title))
-                try:
-                    video_file_name = yt.streams.first().download(filename=i + ' ' + title)
-                    video_file_name = os.path.basename(video_file_name)
-                    drive_auth = g_auth_bot(update, chat_id)
-                    if drive_auth:
-                        update.message.reply_text("{}을(를) 드라이브에 업로드 중입니다.".format(title))
-                        upload_get_link(drive_auth, video_file_name, chat_id, permission=False, playlist=plist_title)
-                        update.message.reply_text("{}을(를) 업로드 완료했습니다.\n"
-                                                  "구글 드라이브에서 확인해주세요.".format(title))
-                    else:
-                        drive_auth = g_auth_bot(update, 'my')
-                        update.message.reply_text("인증에 실패하셨습니다.")
-                        update.message.reply_text("{}을(를) 드라이브에 업로드 중입니다.".format(title))
-                        video_drive_link = upload_get_link(drive_auth, video_file_name, chat_id, playlist=plist_title)
-                        update.message.reply_text("{}을(를) 업로드 완료했습니다.\n"
-                                                  "동영상 링크 : {}".format(title, video_drive_link))
-                except Exception as e:
-                    bot.sendMessage(chat_id="580916113",
-                                    text="error occured while downloading playlist " + str(e))
 
 
     elif text.startswith("https://www.you") or text.startswith("https://you"):
@@ -213,118 +32,6 @@ def get_message(bot, update):
         bot.sendMessage(text="동영상 또는 음원을 골라주세요.",
                         chat_id=chat_id,
                         reply_markup=show_markup)
-
-    elif text.startswith("https://drive"):
-        link = text
-        pattern = r'(?<=/)[^/]*(?=/)'
-        file_id = re.findall(pattern, link)[-1]
-        update.message.reply_text(file_id)
-        gauth = g_auth_bot(update, chat_id)
-        if gauth:
-            drive = GoogleDrive(gauth)
-            download_file = drive.CreateFile({'id': file_id})
-            tmp_file = download_file['title']
-            update.message.reply_text(tmp_file)
-            download_file.GetContentFile(tmp_file)
-            upload_get_link(gauth, tmp_file, chat_id, permission=False)
-        else:
-            update.message.reply_text('인증에 실패했습니다.')
-
-    elif text.lower().startswith("itunes") or text.startswith("아이튠즈"):
-        if text.lower().startswith("itunes"):
-            keyword = text[7:].strip()
-        else:
-            keyword = text[4:].strip()
-
-        track_data = get_track_data(keyword, index='all', search=True)
-        if track_data:
-            titles = [i[0] for i in track_data]
-            show_list = [InlineKeyboardButton(title, callback_data='itm, ' + str(i) + ", " + keyword) for i, title in
-                         enumerate(titles)]
-            menu = build_menu(show_list, 1)
-            show_markup = InlineKeyboardMarkup(menu)
-            bot.sendMessage(text="다운로드 받고 싶은 음원을 골라주세요.",
-                            chat_id=chat_id,
-                            reply_markup=show_markup)
-        else:
-            update.message.reply_text("검색 결과가 존재하지 않습니다.ㅠㅠㅠ\n"
-                                      "다른 서비스를 신청하고 싶으시면 [/help]를 터치해주세요.")
-
-    elif text.startswith("찾아"):
-        keyword = text[3:].strip()
-        track_data = get_track_data(keyword, index='all', search=True)
-        if track_data:
-            titles = [i[0] for i in track_data]
-            update.message.reply_text("다음과 같은 결과가 있습니다.\n" + '\n'.join(titles))
-        else:
-            update.message.reply_text("검색 결과가 존재하지 않습니다.ㅠㅠㅠ\n"
-                                      "다른 서비스를 신청하고 싶으시면 [/help]를 터치해주세요.")
-
-    elif text.startswith("가수"):
-        keyword = text[2:].strip()
-        if keyword:
-            update.message.reply_text(keyword + " 가수를 검색 중입니다.")
-            songs = []
-            for song_type in ['kpop', 'pop']:
-                c.execute("SELECT artist FROM {}_artist".format(song_type))
-                songs.extend(sorted([artist[0] for artist in c.fetchall()]))
-            songs = [artist for artist in songs if show_dif(artist.lower(), keyword.lower()) < 0.1 or (
-                        len(keyword.lower()) > 1 and keyword.lower() in artist.lower())]
-            for artist in songs:
-                for song_type in ['kpop', 'pop']:
-                    song_infos = get_song_list(c, song_type, artist)
-                    if len(song_infos) > 1:
-                        artist_id = is_artist(c, song_type, artist)
-                        show_list = [InlineKeyboardButton(song_info[2] + ' - ' + song_info[1],
-                                                          callback_data="send, " + song_type + ", " + str(song_info[0]))
-                                     for song_info in song_infos] \
-                                    + [InlineKeyboardButton('get all',
-                                                            callback_data="send, " + song_type + ", " + "get all, " + str(
-                                                                artist_id))]
-                        menu = build_menu(show_list, 1)
-                        show_markup = InlineKeyboardMarkup(menu)
-                        bot.sendMessage(text="{}이(가) 선택되었습니다.".format(artist),
-                                        chat_id=chat_id,
-                                        reply_markup=show_markup)
-                    elif len(song_infos) == 1:
-                        song_info = song_infos[0]
-                        song = song_info[1]
-                        artist = song_info[2]
-                        link = song_info[3]
-                        bot.sendMessage(text="{}이(가) 선택되었습니다.".format(artist + ' - ' + song),
-                                        chat_id=chat_id)
-                        bot.sendMessage(chat_id=chat_id,
-                                        text="곡 : " + artist + ' - ' + song + \
-                                             '\n유튜브 링크 : ' + get_youtube_url(artist + ' - ' + song) + \
-                                             '\n다운로드 링크 : ' + link + "\n\n")
-            bot.sendMessage(chat_id=chat_id,
-                            text="다른 서비스를 신청하고 싶으시면 [/help]를 터치해주세요.")
-
-    elif text.startswith("노래"):
-        keyword = text[2:].strip()
-        if keyword:
-            update.message.reply_text(keyword + " 노래를 검색 중입니다.")
-            songs = []
-            for song_type in ['kpop', 'pop']:
-                c.execute("SELECT song, artist, link FROM {}_song".format(song_type))
-                songs.extend(sorted([song for song in c.fetchall()], key=lambda element: element[0]))
-            song_infos = [song for song in songs if show_dif(song[0].lower(), keyword.lower()) < 0.12 or (
-                    len(keyword.lower()) > 1 and keyword.lower() in song[0].lower())]
-            for song_info in song_infos:
-                song = song_info[0]
-                artist = song_info[1]
-                link = song_info[2]
-                bot.sendMessage(text="{}이(가) 선택되었습니다.".format(artist + ' - ' + song),
-                                chat_id=chat_id)
-                bot.sendMessage(chat_id=chat_id,
-                                text="곡 : " + artist + ' - ' + song + \
-                                     '\n유튜브 링크 : ' + get_youtube_url(artist + ' - ' + song) + \
-                                     '\n다운로드 링크 : ' + link + "\n\n")
-            update.message.reply_text("다른 서비스를 신청하고 싶으시면 [/help]를 터치해주세요.")
-
-    conn.commit()
-    c.close()
-    conn.close()
 
 
 def show_dif(a, b):
@@ -365,105 +72,45 @@ def download_url(bot, update):
     down_type = data[1]
     link = data[2]
     chat_id = str(update.callback_query.message.chat_id)
-    try:
-        yt = YouTube(link)
-        title = yt.title
-        bot.edit_message_text(text="{}을(를) 유튜브에서 다운 받는 중입니다.".format(title),
-                              chat_id=update.callback_query.message.chat_id,
-                              message_id=update.callback_query.message.message_id)
-        video_file_name = download_youtube(link)
-        print(video_file_name)
-
-        if down_type == '동영상':
-            drive_auth = g_auth_bot(update, chat_id)
-            if drive_auth:
-                update.callback_query.message.reply_text("{}을(를) 드라이브에 업로드 중입니다.".format(title))
-                upload_get_link(drive_auth, video_file_name, chat_id, permission=False)
-                update.callback_query.message.reply_text("{}을(를) 업로드 완료했습니다.\n"
-                                                         "구글 드라이브에서 확인해주세요.".format(title))
-            else:
-                drive_auth = g_auth_bot(update, 'my')
-                update.callback_query.message.reply_text("인증에 실패하셨습니다.")
-                update.callback_query.message.reply_text("{}을(를) 드라이브에 업로드 중입니다.".format(title))
-                video_drive_link = upload_get_link(drive_auth, video_file_name, chat_id)
-                update.callback_query.message.reply_text("{}을(를) 업로드 완료했습니다.\n"
-                                                         "동영상 링크 : {}".format(title, video_drive_link))
-        else:
-            drive_auth = g_auth_bot(update, chat_id)
-            if drive_auth:
-                update.callback_query.message.reply_text("{}을(를) 음원으로 변환 중입니다.".format(title))
-                if video_file_name.endswith('mp4'):
-                    music_file_name = video_file_name[:-1] + '3'
-                    thumbnail = yt.player_config_args['player_response']['videoDetails']['thumbnail']['thumbnails'][-2][
-                        'url']
-                    cover = wget.download(thumbnail)
-                    command = ['ffmpeg', '-i', video_file_name.encode('utf-8'), '-i', cover.encode('utf-8'), '-acodec',
-                               'libmp3lame',
-                               '-b:a', '192k', '-c:v', 'copy', '-map', '0:a:0', '-map', '1:v:0',
-                               music_file_name.encode('utf-8')]
-                    subprocess.call(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                    os.unlink(video_file_name)
-                    update.callback_query.message.reply_text("{}을(를) 업로드 중입니다.".format(title))
-                    upload_get_link(drive_auth, music_file_name, chat_id, permission=False)
-                    os.unlink(cover)
-                    update.callback_query.message.reply_text("{}을(를) 업로드 완료했습니다.\n"
-                                                             "구글 드라이브에서 확인해주세요.".format(title))
-                else:
-                    os.unlink(video_file_name)
-                    update.callback_query.message.reply_text("{} 음원 변환에 실패했습니다.\n".format(title))
-            else:
-                drive_auth = g_auth_bot(update, 'my')
-                update.callback_query.message.reply_text("인증에 실패하셨습니다.")
-                if video_file_name.endswith('mp4'):
-                    music_file_name = video_file_name[:-1] + '3'
-                    cover = wget.download(yt.thumbnail_url)
-                    command = ['ffmpeg', '-i', video_file_name.encode('utf-8'), '-i', cover.encode('utf-8'), '-acodec',
-                               'libmp3lame',
-                               '-b:a', '192k', '-c:v', 'copy', '-map', '0:a:0', '-map', '1:v:0',
-                               music_file_name.encode('utf-8')]
-                    subprocess.call(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                    update.callback_query.message.reply_text("{}을(를) 업로드 중입니다.".format(title))
-                    music_drive_link = upload_get_link(drive_auth, music_file_name, chat_id)
-                    os.unlink(cover)
-                    os.unlink(video_file_name)
-                    update.callback_query.message.reply_text("{}을(를) 유튜브에서 다운 받았습니다.\n"
-                                                             "음원 링크 : {}".format(title, music_drive_link))
-                else:
-                    os.unlink(video_file_name)
-                    update.callback_query.message.reply_text("{} 음원 변환에 실패했습니다.\n".format(title))
-    except RegexMatchError:
-        bot.edit_message_text(text="유튜브 링크가 올바르지 않습니다.",
-                              chat_id=update.callback_query.message.chat_id,
-                              message_id=update.callback_query.message.message_id)
-
-
-@run_async
-def itunes_callback(bot, update):
-    chat_id = str(update.callback_query.message.chat_id)
-    data = update.callback_query.data.split(', ')
-    idx = int(data[1])
-    keyword = data[2]
-    track_data = get_track_data(keyword, index=idx)
-    title, cover, metadata, lyrics = track_data
-    artist, song = title.split(' - ')
-    bot.edit_message_text(text=title + "이 선택되었습니다.",
+    print(f'link {link}')
+    bot.edit_message_text(text="{}을(를) 유튜브에서 다운로드 받는 중입니다.".format(link),
                           chat_id=update.callback_query.message.chat_id,
                           message_id=update.callback_query.message.message_id)
-    music = media_manager.YoutubeUtil(artist=artist, song=song).download_youtube_music_with_only_info(track_data)
-
-    drive_auth = g_auth_bot(update, chat_id)
-    if drive_auth:
-        update.callback_query.message.reply_text("{}을(를) 업로드 중입니다.".format(title))
-        upload_get_link(drive_auth, music, chat_id, permission=False)
-        update.callback_query.message.reply_text("{}을(를) 업로드 완료했습니다.\n"
-                                                 "구글 드라이브에서 확인해주세요.".format(title))
+    if down_type == '동영상':
+        video_file_name = media_manager.YoutubeUtil(link=link).download_youtube_video()
+        bot.edit_message_text(text="{}을(를) 유튜브에서 다운로드 받았습니다.".format(video_file_name),
+                              chat_id=update.callback_query.message.chat_id,
+                              message_id=update.callback_query.message.message_id)
+        drive_auth = g_auth_bot(update, chat_id)
+        if drive_auth:
+            update.callback_query.message.reply_text("{}을(를) 드라이브에 업로드 중입니다.".format(video_file_name))
+            print(video_file_name)
+            try:
+                upload_get_link(video_file_name, 'video')
+            except Exception as e:
+                print(e)
+            update.callback_query.message.reply_text("{}을(를) 업로드 완료했습니다.\n"
+                                                     "구글 드라이브에서 확인해주세요.".format(video_file_name))
+        else:
+            drive_auth = g_auth_bot(update, 'my')
+            update.callback_query.message.reply_text("인증에 실패하셨습니다.")
+            update.callback_query.message.reply_text("{}을(를) 드라이브에 업로드 중입니다.".format(video_file_name))
+            video_drive_link = upload_get_link(drive_auth, video_file_name, chat_id)
+            update.callback_query.message.reply_text("{}을(를) 업로드 완료했습니다.\n"
+                                                     "동영상 링크 : {}".format(video_file_name, video_drive_link))
     else:
-        drive_auth = g_auth_bot(update, 'my')
-        update.callback_query.message.reply_text("인증에 실패하셨습니다.")
-        update.callback_query.message.reply_text("{}을(를) 업로드 중입니다.".format(title))
-        music_drive_link = upload_get_link(drive_auth, music, chat_id)
-        update.callback_query.message.reply_text("{}을(를) 유튜브에서 다운 받았습니다.\n"
-                                                 "음원 링크 : {}".format(title, music_drive_link))
+        music_file_name = media_manager.YoutubeUtil(link=link).download_youtube_music_get_info()
+        bot.edit_message_text(text="{}을(를) 유튜브에서 다운로드 받았습니다.".format(music_file_name),
+                              chat_id=update.callback_query.message.chat_id,
+                              message_id=update.callback_query.message.message_id)
+        drive_auth = g_auth_bot(update, chat_id)
+        if drive_auth:
+            try:
+                upload_get_link(music_file_name, 'music')
+            except Exception as e:
+                print(e)
+            update.callback_query.message.reply_text("{}을(를) 업로드 완료했습니다.\n"
+                                                     "구글 드라이브에서 확인해주세요.".format(music_file_name))
 
 
 @run_async
@@ -828,6 +475,29 @@ def startswith(pattern, word):
     return re.match(pattern, word, re.I)
 
 
+import urllib.parse
+
+
+def get_youtube_url(keyword, limit=1):
+    url = 'https://www.youtube.com/results?search_query=' + urllib.parse.quote_plus(keyword)
+    response = requests.get(url)
+    html = response.text
+    soup = BeautifulSoup(html, 'html.parser')
+
+    urls = list()
+    i = 0
+    for link in soup.findAll('a', {'class': 'yt-uix-tile-link'}):
+        if link.get('href').startswith('/watch'):
+            if limit == 1:
+                return 'https://www.youtube.com' + link.get('href')
+            elif i < limit:
+                urls.append('https://www.youtube.com' + link.get('href'))
+            else:
+                return urls
+            i += 1
+    return urls if urls else "no youtube link"
+
+
 if __name__ == '__main__':
     token = '751248768:AAEJB5JcAh52nWfrSyKTEISGX8_teJIxNFw'
     # token = "790146878:AAFKnWCnBV9WMSMYPnfcRXukmftgDyV_BlY" #this is a test bot
@@ -852,9 +522,6 @@ if __name__ == '__main__':
                                                         pattern='^drsel'))
     updater.dispatcher.add_handler(CallbackQueryHandler(download_url,
                                                         pattern='^url'))
-    updater.dispatcher.add_handler(CallbackQueryHandler(itunes_callback,
-                                                        pattern='^itm'))
-
     updater.dispatcher.add_handler(CallbackQueryHandler(pop_artist_alph_callback,
                                                         pattern='^artist_alph'))
     updater.dispatcher.add_handler(CallbackQueryHandler(kpop_artist_han_callback,
