@@ -499,7 +499,7 @@ def get_youtube_url(keyword, limit=1):
 
 
 if __name__ == '__main__':
-    token = ''
+    token = 'YOUR_BOT_TOKEN_HERE'
 
     bot = Bot(token=token)
 
